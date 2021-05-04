@@ -1,4 +1,4 @@
-module gitlab.com/trendsnap/trendgraph/dgraph-lambda-go
+module github.com/schartey/dgraph-lambda-go
 
 go 1.16
 
