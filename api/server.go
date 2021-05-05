@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -11,20 +11,18 @@ import (
 	"github.com/dgraph-io/dgo/v210/protos/api"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"gitlab.com/trendsnap/trendgraph/dgraph-lambda-go/request"
-	"gitlab.com/trendsnap/trendgraph/dgraph-lambda-go/resolver"
+	"github.com/schartey/dgraph-lambda-go/resolver"
 	"google.golang.org/grpc"
 )
 
-func main() {
-
+func RunServer(setupResolver func(r *resolver.Resolver)) error {
 	dgraphUrl := os.Getenv("DGRAPH_URL")
-	fmt.Println(dgraphUrl)
 
 	/* Setup DQL-Client */
 	conn, err := grpc.Dial(dgraphUrl, grpc.WithInsecure())
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		return err
 	}
 
 	defer conn.Close()
@@ -33,10 +31,7 @@ func main() {
 
 	/* Setup Resolver */
 	res := resolver.NewResolver(dql)
-	err = res.LoadPlugins("plugins")
-	if err != nil {
-		panic(err)
-	}
+	setupResolver(res)
 
 	/* Setup Router */
 	r := chi.NewRouter()
@@ -45,17 +40,22 @@ func main() {
 		log.Println("Got request")
 		decoder := json.NewDecoder(r.Body)
 
-		var dbody request.DBody
+		var dbody resolver.DBody
 		err := decoder.Decode(&dbody)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
 
-		err = res.Resolve(r.Context(), &dbody)
+		response, err := res.Resolve(r.Context(), &dbody)
 		if err != nil {
 			fmt.Println(err.Error())
+			w.WriteHeader(500)
+			w.Write([]byte(err.Error()))
 		}
+		w.Write(response)
 	})
-	log.Println("listening on 8686")
-	log.Fatal(http.ListenAndServe(":8686", r))
+	fmt.Println("Lambda listening on 8686")
+	fmt.Println(http.ListenAndServe(":8686", r))
+
+	return nil
 }

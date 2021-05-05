@@ -1,4 +1,4 @@
-package request
+package resolver
 
 type AuthHeader struct {
 	Key   string `json:"key"`

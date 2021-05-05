@@ -1,11 +1,12 @@
 version: "3.2"
 services:
   lambda:
-    build: .
+    build: 
+      context: .
+      dockerfile: dev.Dockerfile
     environment:
       DGRAPH_URL: http://alpha:8080
     ports: 
       - 8686:8686
     volumes:
       - .:/lambda
-    

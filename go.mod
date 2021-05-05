@@ -3,9 +3,12 @@ module github.com/schartey/dgraph-lambda-go
 go 1.16
 
 require (
-	firebase.google.com/go/v4 v4.5.0
 	github.com/dgraph-io/dgo/v210 v210.0.0-20210421093152-78a2fece3ebd
 	github.com/go-chi/chi v1.5.4
-	google.golang.org/api v0.46.0 // indirect
+	github.com/stretchr/testify v1.6.1 // indirect
+	github.com/urfave/cli/v2 v2.3.0 // indirect
+	golang.org/x/net v0.0.0-20210503060351-7fd8e65b6420 // indirect
+	golang.org/x/sys v0.0.0-20210503080704-8803ae5d1324 // indirect
+	google.golang.org/genproto v0.0.0-20210429181445-86c259c2b4ab // indirect
 	google.golang.org/grpc v1.37.0
 )
