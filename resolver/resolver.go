@@ -10,7 +10,7 @@ import (
 
 type Resolver struct {
 	plugins    []*plugin.Plugin
-	middleware []MiddlewareFunc
+	middleware []ResolverMiddlewareFunc
 	resolvers  map[string]HandlerFunc
 }
 
@@ -18,15 +18,19 @@ func NewResolver() *Resolver {
 	return &Resolver{resolvers: make(map[string]HandlerFunc)}
 }
 
-// Use adds middleware to the chain which is run after router.
 func (r *Resolver) ResolveFunc(resolver string, handlerFunc HandlerFunc) {
 	fmt.Printf("Loaded Resolver for %s\n", resolver)
 	r.resolvers[resolver] = handlerFunc
 }
 
-// Use adds middleware to the chain which is run after router.
-func (r *Resolver) Use(middleware ...MiddlewareFunc) {
-	r.middleware = append(r.middleware, middleware...)
+func (r *Resolver) Use(middleware MiddlewareFunc) {
+	resolverMiddleware := &ResolverMiddlewareFunc{Resolver: "*", middlewareFunc: middleware}
+	r.middleware = append(r.middleware, *resolverMiddleware)
+}
+
+func (r *Resolver) UseOnResolver(resolver string, middleware MiddlewareFunc) {
+	resolverMiddleware := &ResolverMiddlewareFunc{Resolver: resolver, middlewareFunc: middleware}
+	r.middleware = append(r.middleware, *resolverMiddleware)
 }
 
 func (r *Resolver) Resolve(ctx context.Context, dbody *DBody) ([]byte, error) {
@@ -41,7 +45,7 @@ func (r *Resolver) Resolve(ctx context.Context, dbody *DBody) ([]byte, error) {
 
 	h := r.resolvers[dbody.Resolver]
 
-	h = applyMiddleware(h, r.middleware...)
+	h = applyMiddleware(h, dbody.Resolver, r.middleware...)
 
 	res, err := h(ctx, args, dbody.AuthHeader)
 	if err != nil {
@@ -50,9 +54,13 @@ func (r *Resolver) Resolve(ctx context.Context, dbody *DBody) ([]byte, error) {
 	return res, nil
 }
 
-func applyMiddleware(h HandlerFunc, middleware ...MiddlewareFunc) HandlerFunc {
+func applyMiddleware(h HandlerFunc, resolver string, middleware ...ResolverMiddlewareFunc) HandlerFunc {
 	for i := len(middleware) - 1; i >= 0; i-- {
-		h = middleware[i](h)
+		if middleware[i].Resolver == "*" {
+			h = middleware[i].middlewareFunc(h)
+		} else if middleware[i].Resolver == resolver {
+			h = middleware[i].middlewareFunc(h)
+		}
 	}
 	return h
 }
