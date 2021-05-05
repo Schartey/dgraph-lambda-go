@@ -11,12 +11,15 @@ import (
 	"github.com/dgraph-io/dgo/v210/protos/api"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/hasura/go-graphql-client"
 	"github.com/schartey/dgraph-lambda-go/resolver"
 	"google.golang.org/grpc"
 )
 
-func RunServer(setupResolver func(r *resolver.Resolver)) error {
+func RunServer(setupResolver func(r *resolver.Resolver, gql *graphql.Client, dql *dgo.Dgraph)) error {
 	dgraphUrl := os.Getenv("DGRAPH_URL")
+
+	gql := graphql.NewClient("https://example.com/graphql", nil)
 
 	/* Setup DQL-Client */
 	conn, err := grpc.Dial(dgraphUrl, grpc.WithInsecure())
@@ -30,8 +33,8 @@ func RunServer(setupResolver func(r *resolver.Resolver)) error {
 	dql := dgo.NewDgraphClient(api.NewDgraphClient(conn))
 
 	/* Setup Resolver */
-	res := resolver.NewResolver(dql)
-	setupResolver(res)
+	res := resolver.NewResolver()
+	setupResolver(res, gql, dql)
 
 	/* Setup Router */
 	r := chi.NewRouter()

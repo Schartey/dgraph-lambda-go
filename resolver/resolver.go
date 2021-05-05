@@ -6,22 +6,16 @@ import (
 	"errors"
 	"fmt"
 	"plugin"
-
-	"github.com/dgraph-io/dgo/v210"
-	"google.golang.org/grpc"
 )
 
 type Resolver struct {
 	plugins    []*plugin.Plugin
 	middleware []MiddlewareFunc
 	resolvers  map[string]HandlerFunc
-	// graphql
-	conn *grpc.ClientConn
-	dql  *dgo.Dgraph
 }
 
-func NewResolver(dql *dgo.Dgraph) *Resolver {
-	return &Resolver{resolvers: make(map[string]HandlerFunc), dql: dql}
+func NewResolver() *Resolver {
+	return &Resolver{resolvers: make(map[string]HandlerFunc)}
 }
 
 // Use adds middleware to the chain which is run after router.
@@ -49,15 +43,11 @@ func (r *Resolver) Resolve(ctx context.Context, dbody *DBody) ([]byte, error) {
 
 	h = applyMiddleware(h, r.middleware...)
 
-	res, err := h(ctx, args, dbody.AuthHeader, r.dql)
+	res, err := h(ctx, args, dbody.AuthHeader)
 	if err != nil {
 		return nil, err
 	}
 	return res, nil
-}
-
-func (r *Resolver) close() {
-	r.conn.Close()
 }
 
 func applyMiddleware(h HandlerFunc, middleware ...MiddlewareFunc) HandlerFunc {

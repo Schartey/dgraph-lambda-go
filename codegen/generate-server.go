@@ -24,6 +24,10 @@ var serverTemplate = template.Must(template.New("server").Parse(`
 package main
 
 import(
+	"fmt"
+
+	"github.com/dgraph-io/dgo/v210"
+	"github.com/hasura/go-graphql-client"
 	"github.com/schartey/dgraph-lambda-go/api"
 	"github.com/schartey/dgraph-lambda-go/resolver"
 )
