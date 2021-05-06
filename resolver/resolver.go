@@ -38,6 +38,10 @@ func (r *Resolver) Resolve(ctx context.Context, dbody *DBody) ([]byte, error) {
 	if err != nil {
 		fmt.Println("Could not marshal arguments")
 	}
+	parents, err := json.Marshal(dbody.Parents)
+	if err != nil {
+		fmt.Println("Could not marshal parents")
+	}
 
 	if r.resolvers[dbody.Resolver] == nil {
 		return nil, errors.New(fmt.Sprintf("Could not resolve %s", dbody.Resolver))
@@ -47,7 +51,7 @@ func (r *Resolver) Resolve(ctx context.Context, dbody *DBody) ([]byte, error) {
 
 	h = applyMiddleware(h, dbody.Resolver, r.middleware...)
 
-	res, err := h(ctx, args, dbody.AuthHeader)
+	res, err := h(ctx, args, parents, dbody.AuthHeader)
 	if err != nil {
 		return nil, err
 	}

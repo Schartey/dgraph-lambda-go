@@ -11,4 +11,4 @@ type ResolverMiddlewareFunc struct {
 
 type MiddlewareFunc func(HandlerFunc) HandlerFunc
 
-type HandlerFunc func(context.Context, []byte, AuthHeader) ([]byte, error)
+type HandlerFunc func(context.Context, []byte, []byte, AuthHeader) ([]byte, error)

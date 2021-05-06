@@ -5,8 +5,15 @@ services:
       context: .
       dockerfile: dev.Dockerfile
     environment:
-      DGRAPH_URL: http://alpha:8080
+      DGRAPHQL_URL: http://alpha:8080
+      DQL_URL: alpha:9080
     ports: 
       - 8686:8686
     volumes:
       - .:/lambda
+    networks:
+      - dgraph
+
+networks:
+  dgraph:
+    external: true

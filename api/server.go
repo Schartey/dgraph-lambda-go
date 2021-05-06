@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -41,7 +40,6 @@ func RunServer(setupResolver func(r *resolver.Resolver, gql *graphql.Client, dql
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/graphql-worker", func(w http.ResponseWriter, r *http.Request) {
-		log.Println("Got request")
 		decoder := json.NewDecoder(r.Body)
 
 		var dbody resolver.DBody

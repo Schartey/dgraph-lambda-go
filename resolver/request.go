@@ -6,8 +6,9 @@ type AuthHeader struct {
 }
 
 type DBody struct {
-	AccessToken string                 `json:"X-Dgraph-AccessToken"`
-	Args        map[string]interface{} `json:"args"`
-	AuthHeader  AuthHeader             `json:"authHeader"`
-	Resolver    string                 `json:"resolver"`
+	AccessToken string                   `json:"X-Dgraph-AccessToken"`
+	Args        map[string]interface{}   `json:"args"`
+	AuthHeader  AuthHeader               `json:"authHeader"`
+	Resolver    string                   `json:"resolver"`
+	Parents     []map[string]interface{} `json:"parents"`
 }
