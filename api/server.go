@@ -17,12 +17,13 @@ import (
 )
 
 func RunServer(setupResolver func(r *resolver.Resolver, gql *graphql.Client, dql *dgo.Dgraph)) error {
-	dgraphUrl := os.Getenv("DGRAPH_URL")
+	dgraphqlUrl := os.Getenv("DGRAPHQL_URL")
+	dqlUrl := os.Getenv("DQL_URL")
 
-	gql := graphql.NewClient("https://example.com/graphql", nil)
+	gql := graphql.NewClient(dgraphqlUrl+"/graphql", nil)
 
 	/* Setup DQL-Client */
-	conn, err := grpc.Dial(dgraphUrl, grpc.WithInsecure())
+	conn, err := grpc.Dial(dqlUrl, grpc.WithInsecure())
 	if err != nil {
 		fmt.Println(err)
 		return err
