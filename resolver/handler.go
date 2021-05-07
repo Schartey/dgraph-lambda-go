@@ -11,4 +11,6 @@ type ResolverMiddlewareFunc struct {
 
 type MiddlewareFunc func(HandlerFunc) HandlerFunc
 
-type HandlerFunc func(context.Context, []byte, []byte, AuthHeader) ([]byte, error)
+type HandlerFunc func(ctx context.Context, input []byte, parents []byte, authHeader AuthHeader) (interface{}, error)
+
+type WebHookFunc func(ctx context.Context, event Event) error

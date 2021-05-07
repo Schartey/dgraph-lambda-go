@@ -12,10 +12,19 @@ type Resolver struct {
 	plugins    []*plugin.Plugin
 	middleware []ResolverMiddlewareFunc
 	resolvers  map[string]HandlerFunc
+	webhooks   map[string]WebHookFunc
 }
 
 func NewResolver() *Resolver {
-	return &Resolver{resolvers: make(map[string]HandlerFunc)}
+	return &Resolver{
+		resolvers: make(map[string]HandlerFunc),
+		webhooks:  make(map[string]WebHookFunc),
+	}
+}
+
+func (r *Resolver) WebHookFunc(typeName string, webhookFunc WebHookFunc) {
+	fmt.Printf("Loaded Webhook for %s\n", typeName)
+	r.webhooks[typeName] = webhookFunc
 }
 
 func (r *Resolver) ResolveFunc(resolver string, handlerFunc HandlerFunc) {
@@ -34,28 +43,41 @@ func (r *Resolver) UseOnResolver(resolver string, middleware MiddlewareFunc) {
 }
 
 func (r *Resolver) Resolve(ctx context.Context, dbody *DBody) ([]byte, error) {
-	args, err := json.Marshal(dbody.Args)
-	if err != nil {
-		fmt.Println("Could not marshal arguments")
-	}
-	parents, err := json.Marshal(dbody.Parents)
-	if err != nil {
-		fmt.Println("Could not marshal parents")
-	}
-
-	if r.resolvers[dbody.Resolver] == nil {
-		return nil, errors.New(fmt.Sprintf("Could not resolve %s", dbody.Resolver))
-	}
-
-	h := r.resolvers[dbody.Resolver]
-
-	h = applyMiddleware(h, dbody.Resolver, r.middleware...)
-
-	res, err := h(ctx, args, parents, dbody.AuthHeader)
-	if err != nil {
+	if dbody.Resolver == "$webhook" {
+		if r.webhooks[dbody.Event.TypeName] == nil {
+			return nil, errors.New(fmt.Sprintf("Could not resolve webhook %s", dbody.Event.TypeName))
+		}
+		err := r.webhooks[dbody.Event.TypeName](ctx, dbody.Event)
 		return nil, err
+	} else {
+		if r.resolvers[dbody.Resolver] == nil {
+			return nil, errors.New(fmt.Sprintf("Could not resolve %s", dbody.Resolver))
+		}
+
+		args, err := json.Marshal(dbody.Args)
+		if err != nil {
+			fmt.Println("Could not marshal parents")
+		}
+
+		parents, err := json.Marshal(dbody.Parents)
+		if err != nil {
+			fmt.Println("Could not marshal parents")
+		}
+
+		h := r.resolvers[dbody.Resolver]
+
+		h = applyMiddleware(h, dbody.Resolver, r.middleware...)
+
+		res, err := h(ctx, args, parents, dbody.AuthHeader)
+		if err != nil {
+			return nil, err
+		}
+		resBytes, err := json.Marshal(res)
+		if err != nil {
+			return nil, err
+		}
+		return resBytes, nil
 	}
-	return res, nil
 }
 
 func applyMiddleware(h HandlerFunc, resolver string, middleware ...ResolverMiddlewareFunc) HandlerFunc {

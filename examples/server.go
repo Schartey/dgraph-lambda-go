@@ -15,12 +15,18 @@ type CreateUserInput struct {
 	Username string `json:"username"`
 }
 
+type UserData struct {
+	Id              string `json:"id"`
+	Username        string `json:"username"`
+	ComplexProperty string `json:"complexProperty"`
+}
+
 func Run() {
 	err := api.RunServer(func(r *resolver.Resolver, gql *graphql.Client, dql *dgo.Dgraph) {
 
 		// Global Middleware
 		r.Use(func(hf resolver.HandlerFunc) resolver.HandlerFunc {
-			return func(c context.Context, b []byte, parents []byte, ah resolver.AuthHeader) ([]byte, error) {
+			return func(c context.Context, b []byte, parents []byte, ah resolver.AuthHeader) (interface{}, error) {
 				// For example authentication.
 				// Add user to context
 				return hf(c, b, parents, ah)
@@ -29,7 +35,7 @@ func Run() {
 
 		// Middleware on specific resolver
 		r.UseOnResolver("Mutation.createUser", func(hf resolver.HandlerFunc) resolver.HandlerFunc {
-			return func(c context.Context, b []byte, parents []byte, ah resolver.AuthHeader) ([]byte, error) {
+			return func(c context.Context, b []byte, parents []byte, ah resolver.AuthHeader) (interface{}, error) {
 				// For example authentication.
 				// Add user to context
 				return b, nil
@@ -37,26 +43,36 @@ func Run() {
 		})
 
 		// Query/Mutation Resolver
-		r.ResolveFunc("Mutation.createUser", func(ctx context.Context, input []byte, parents []byte, ah resolver.AuthHeader) ([]byte, error) {
+		r.ResolveFunc("Mutation.createUser", func(ctx context.Context, input []byte, parents []byte, ah resolver.AuthHeader) (interface{}, error) {
 			var createUserInput CreateUserInput
 			json.Unmarshal(input, &createUserInput)
 
 			// Do Something
-
-			resp := `
-			{
-				"id": "0x1"	
-			}`
-			return ([]byte)(resp), nil
+			user := UserData{
+				Id:       "0x1",
+				Username: createUserInput.Username,
+			}
+			return user, nil
 		})
 
 		// Field Resolver
-		r.ResolveFunc("User.complexProperty", func(ctx context.Context, input []byte, parents []byte, ah resolver.AuthHeader) ([]byte, error) {
-			fmt.Println(string(parents))
+		r.ResolveFunc("UserData.complexProperty", func(ctx context.Context, input []byte, parents []byte, ah resolver.AuthHeader) (interface{}, error) {
+			var userParents []UserData
+			json.Unmarshal(parents, &userParents)
 
-			resp := `
-			[ "complexPropertyValue" ]`
-			return ([]byte)(resp), nil
+			var complexProperties []string
+			for _, userParent := range userParents {
+				complexProperties = append(complexProperties, fmt.Sprintf("VeryComplex - %s", userParent.Id))
+			}
+
+			return complexProperties, nil
+		})
+
+		// Webhook
+		r.WebHookFunc("UserData", func(ctx context.Context, event resolver.Event) error {
+			fmt.Println(event.Operation)
+
+			return nil
 		})
 	})
 
