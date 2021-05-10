@@ -69,7 +69,7 @@ func Run() {
 		})
 
 		// Webhook
-		r.WebHookFunc("UserData", func(ctx context.Context, event resolver.Event) error {
+		r.WebhookFunc("UserData", func(ctx context.Context, event resolver.Event) error {
 			fmt.Println(event.Operation)
 
 			return nil

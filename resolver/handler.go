@@ -5,7 +5,7 @@ import (
 )
 
 type ResolverMiddlewareFunc struct {
-	Resolver       string
+	resolver       string
 	middlewareFunc MiddlewareFunc
 }
 
