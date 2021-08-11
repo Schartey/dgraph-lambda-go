@@ -9,7 +9,7 @@ var runCmd = &cli.Command{
 	Name:  "run",
 	Usage: "run lambda server",
 	Action: func(ctx *cli.Context) error {
-		examples.Run()
+		examples.RunWithServer()
 		return nil
 	},
 }

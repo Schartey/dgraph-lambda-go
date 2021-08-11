@@ -31,6 +31,7 @@ func Execute() {
 	app.Commands = []*cli.Command{
 		initCmd,
 		runCmd,
+		generateCmd,
 	}
 
 	if err := app.Run(os.Args); err != nil {
