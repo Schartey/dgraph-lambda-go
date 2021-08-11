@@ -85,6 +85,7 @@ func Generate(c *config.Config, r *rewriter.Rewriter) error {
 	resolverFileTemplate := config.ResolverTemplateRegex.FindStringSubmatch(c.Resolver.FilenameTemplate)
 
 	if resolverFileTemplate[1] == "resolver" {
+
 		fileName := path.Join(c.Resolver.Dir, "field.resolver.go")
 		resolverFile, err := os.Create(fileName)
 		if err != nil {
@@ -234,6 +235,44 @@ func Generate(c *config.Config, r *rewriter.Rewriter) error {
 		}
 		resolverFile.Close()
 
+		fileName = path.Join(c.Resolver.Dir, "webhook.resolver.go")
+		resolverFile, err = os.Create(fileName)
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+
+		pkgs = make(map[string]*types.Package)
+
+		var models = make(map[string]*parser.Model)
+
+		for _, m := range c.ParsedTree.ModelTree.Models {
+			if len(m.LambdaOnMutate) > 0 {
+				models[m.Name] = m
+				//pkgs[m.TypeName.Pkg().Name()] = m.TypeName.Pkg()
+			}
+		}
+
+		if len(models) > 0 {
+			pkgs["context"] = types.NewPackage("context", "context")
+			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
+		}
+
+		err = webhookResolverTemplate.Execute(resolverFile, struct {
+			Models      map[string]*parser.Model
+			Rewriter    *rewriter.Rewriter
+			Packages    map[string]*types.Package
+			PackageName string
+		}{
+			Models:      models,
+			Rewriter:    r,
+			Packages:    pkgs,
+			PackageName: c.Resolver.Package,
+		})
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+		f.Close()
+
 		resolverFile, err = os.Create(c.Exec.Filename)
 		if err != nil {
 			fmt.Println(err.Error())
@@ -272,17 +311,23 @@ func Generate(c *config.Config, r *rewriter.Rewriter) error {
 		}
 
 		pkgs["context"] = types.NewPackage("context", "context")
+		pkgs["errors"] = types.NewPackage("errors", "errors")
 		pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 		pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 		pkgs["json"] = types.NewPackage("encoding/json", "json")
 
 		pkgs[c.Resolver.Package] = types.NewPackage(path.Join(c.Root, c.Resolver.Dir), c.Resolver.Package)
 
+		for _, model := range c.ParsedTree.ModelTree.Models {
+			fmt.Println(len(model.LambdaOnMutate))
+		}
+
 		err = executerTemplate.Execute(resolverFile, struct {
 			FieldResolvers      map[string]*parser.FieldResolver2
 			Queries             map[string]*parser.Query2
 			Mutations           map[string]*parser.Mutation2
 			Middleware          map[string]string
+			Models              map[string]*parser.Model
 			Packages            map[string]*types.Package
 			PackageName         string
 			ResolverPackageName string
@@ -291,6 +336,7 @@ func Generate(c *config.Config, r *rewriter.Rewriter) error {
 			Queries:             c.ParsedTree.ResolverTree.Queries,
 			Mutations:           c.ParsedTree.ResolverTree.Mutations,
 			Middleware:          c.ParsedTree.Middleware,
+			Models:              c.ParsedTree.ModelTree.Models,
 			Packages:            pkgs,
 			PackageName:         c.Exec.Package,
 			ResolverPackageName: c.Resolver.Package,
@@ -397,7 +443,7 @@ func Body(key string, rewriter *rewriter.Rewriter) string {
 		return val
 	} else {
 		return `
-		return nil, nil
+	return nil, nil
 `
 	}
 }
@@ -407,7 +453,7 @@ func MiddlewareBody(key string, rewriter *rewriter.Rewriter) string {
 		return val
 	} else {
 		return `
-		return nil
+	return nil
 `
 	}
 }
@@ -611,6 +657,29 @@ func (m *MiddlewareResolver) Middleware_{{$middleware}}(md *api.MiddlewareData) 
 {{ end }}
 `))
 
+var webhookResolverTemplate = template.Must(template.New("webhook-resolver").Funcs(template.FuncMap{
+	"path":     Path,
+	"body":     MiddlewareBody,
+	"typeName": TypeName,
+	"is":       Is,
+}).Parse(`
+package {{.PackageName}}
+
+import(
+	{{- range $pkg := .Packages }}
+	"{{ $pkg | path }}"{{- end}}
+)
+
+/** Put these into resolvers.go  or similar **/
+type WebhookResolver struct {
+	*Resolver
+}
+
+{{ range $model := .Models}}
+func (w *WebhookResolver) Webhook_{{ $model.TypeName | typeName }}(ctx context.Context, event api.Event) error { {{ body (printf "Webhook_%s" ($model.TypeName | typeName)) $.Rewriter }}}
+{{ end }}
+`))
+
 var executerTemplate = template.Must(template.New("executer").Funcs(template.FuncMap{
 	"path":     Path,
 	"typeName": TypeName,
@@ -631,10 +700,11 @@ type Executer struct {
 	queryResolver    	{{.ResolverPackageName}}.QueryResolver
 	mutationResolver 	{{.ResolverPackageName}}.MutationResolver
 	middlewareResolver 	{{.ResolverPackageName}}.MiddlewareResolver
+	webhookResolver 	{{.ResolverPackageName}}.WebhookResolver
 }
 
 func NewExecuter(resolver *{{.ResolverPackageName}}.Resolver) api.ExecuterInterface {
-	return Executer{fieldResolver: {{.ResolverPackageName}}.FieldResolver{Resolver: resolver}, queryResolver: {{.ResolverPackageName}}.QueryResolver{Resolver: resolver}, middlewareResolver: {{.ResolverPackageName}}.MiddlewareResolver{Resolver: resolver}}
+	return Executer{fieldResolver: {{.ResolverPackageName}}.FieldResolver{Resolver: resolver}, queryResolver: {{.ResolverPackageName}}.QueryResolver{Resolver: resolver}, middlewareResolver: {{.ResolverPackageName}}.MiddlewareResolver{Resolver: resolver}, webhookResolver: {{.ResolverPackageName}}.WebhookResolver{Resolver: resolver}}
 }
 
 func (e *Executer) Middleware(md *api.MiddlewareData) error {
@@ -679,85 +749,96 @@ func (e *Executer) Middleware(md *api.MiddlewareData) error {
 }
 
 func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) {
-	
-	parentsBytes, err := dbody.Parents.MarshalJSON()
-	if err != nil {
-		return nil, err
+	if &dbody.Event != nil {
+		var err error
+		switch dbody.Event.TypeName {
+			{{- range $model := .Models}} {{ if ne (len $model.LambdaOnMutate) 0 }}
+			case "{{ $model.TypeName | typeName }}":
+				err = e.webhookResolver.Webhook_{{ $model.TypeName | typeName }}(ctx, dbody.Event)
+				return nil, err
+			{{ end }} {{ end }}
+		}
+	} else {
+		parentsBytes, err := dbody.Parents.MarshalJSON()
+		if err != nil {
+			return nil, err
+		}
+
+		md := &api.MiddlewareData{Ctx: ctx, Dbody: dbody}
+		if err = e.Middleware(md); err != nil {
+			return nil, err
+		}
+		ctx = md.Ctx
+		dbody = md.Dbody
+
+		response := []byte{}
+
+		switch dbody.Resolver {
+			{{- range $fieldResolver := .FieldResolvers}}
+			case "{{$fieldResolver.Field.ParentTypeName }}.{{$fieldResolver.Field.Name}}":
+				{
+					var parents []{{$fieldResolver.Field.GoType | pointer }}
+					json.Unmarshal(parentsBytes, &parents)
+
+					// Dependent on generation loop or just direct
+					/*var {{$fieldResolver.Field.Name}}s []{{$fieldResolver.Field.GoType | ref}}
+					for _, parent := range parents {
+						{{$fieldResolver.Field.Name}}s = fullnames.append(e.fieldResolver.{{$fieldResolver.Field.GoType | ref }}_{{$fieldResolver.Field.Name}}(ctx, parent))
+					}*/
+					{{$fieldResolver.Field.Name | untitle }}s, err := e.fieldResolver.{{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx, parents, dbody.AuthHeader)
+					if err != nil {
+						return nil, err
+					}
+
+					response, err = json.Marshal({{$fieldResolver.Field.Name | untitle }}s)
+					if err != nil {
+						return nil, err
+					}
+					break
+				}
+			{{- end }}
+
+			{{- range $query := .Queries}}
+			case "Query.{{$query.Name}}":
+				{
+					{{- range $arg := $query.Arguments }}
+					var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
+					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
+					{{- end }}	
+					{{ $query.Return.TypeName | typeName | untitle }}, err := e.queryResolver.Query_{{$query.Name}}(ctx, {{$query.Arguments | args}}, dbody.AuthHeader)
+					if err != nil {
+						return nil, err
+					}
+		
+					response, err = json.Marshal({{ $query.Return.TypeName | typeName | untitle }})
+					if err != nil {
+						return nil, err
+					}
+					break
+				}
+			{{- end }}
+			{{- range $mutation := .Mutations}}
+			case "Mutation.{{$mutation.Name}}":
+				{
+					{{- range $arg := $mutation.Arguments }}
+					var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
+					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
+					{{- end }}	
+					{{ $mutation.Return.TypeName | typeName | untitle }}, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx, {{$mutation.Arguments | args}}, dbody.AuthHeader)
+					if err != nil {
+						return nil, err
+					}
+		
+					response, err = json.Marshal({{ $mutation.Return.TypeName | typeName | untitle }})
+					if err != nil {
+						return nil, err
+					}
+					break
+				}
+			{{- end }}
+		}
+		return response, nil
 	}
-
-	md := &api.MiddlewareData{Ctx: ctx, Dbody: dbody}
-	if err = e.Middleware(md); err != nil {
-		return nil, err
-	}
-	ctx = md.Ctx
-	dbody = md.Dbody
-
-	response := []byte{}
-
-	switch dbody.Resolver {
-		{{- range $fieldResolver := .FieldResolvers}}
-		case "{{$fieldResolver.Field.ParentTypeName }}.{{$fieldResolver.Field.Name}}":
-			{
-				var parents []{{$fieldResolver.Field.GoType | pointer }}
-				json.Unmarshal(parentsBytes, &parents)
-
-				// Dependent on generation loop or just direct
-				/*var {{$fieldResolver.Field.Name}}s []{{$fieldResolver.Field.GoType | ref}}
-				for _, parent := range parents {
-					{{$fieldResolver.Field.Name}}s = fullnames.append(e.fieldResolver.{{$fieldResolver.Field.GoType | ref }}_{{$fieldResolver.Field.Name}}(ctx, parent))
-				}*/
-				{{$fieldResolver.Field.Name | untitle }}s, err := e.fieldResolver.{{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx, parents, dbody.AuthHeader)
-				if err != nil {
-					return nil, err
-				}
-
-				response, err = json.Marshal({{$fieldResolver.Field.Name | untitle }}s)
-				if err != nil {
-					return nil, err
-				}
-				break
-			}
-		{{- end }}
-
-		{{- range $query := .Queries}}
-		case "Query.{{$query.Name}}":
-			{
-				{{- range $arg := $query.Arguments }}
-				var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
-				json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
-				{{- end }}	
-				{{ $query.Return.TypeName | typeName | untitle }}, err := e.queryResolver.Query_{{$query.Name}}(ctx, {{$query.Arguments | args}}, dbody.AuthHeader)
-				if err != nil {
-					return nil, err
-				}
-	
-				response, err = json.Marshal({{ $query.Return.TypeName | typeName | untitle }})
-				if err != nil {
-					return nil, err
-				}
-				break
-			}
-		{{- end }}
-		{{- range $mutation := .Mutations}}
-		case "Mutation.{{$mutation.Name}}":
-			{
-				{{- range $arg := $mutation.Arguments }}
-				var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
-				json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
-				{{- end }}	
-				{{ $mutation.Return.TypeName | typeName | untitle }}, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx, {{$mutation.Arguments | args}}, dbody.AuthHeader)
-				if err != nil {
-					return nil, err
-				}
-	
-				response, err = json.Marshal({{ $mutation.Return.TypeName | typeName | untitle }})
-				if err != nil {
-					return nil, err
-				}
-				break
-			}
-		{{- end }}
-	}
-	return response, nil
+	return nil, errors.New("No resolver found")
 }
 `))

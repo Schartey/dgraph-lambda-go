@@ -84,6 +84,18 @@ func (r *Rewriter) Load() {
 					}
 				}
 
+				if strings.HasPrefix(d.Name.Name, "Webhook_") {
+					webhookName := strings.TrimPrefix(d.Name.Name, "Webhook_")
+
+					for _, model := range r.config.ParsedTree.ModelTree.Models {
+						if model.TypeName.Name() == webhookName {
+							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							found = true
+							break
+						}
+					}
+				}
+
 				for _, fieldResolver := range r.config.ParsedTree.ResolverTree.FieldResolvers {
 					splitName := strings.Split(d.Name.Name, "_")
 

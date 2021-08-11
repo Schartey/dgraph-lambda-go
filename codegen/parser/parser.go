@@ -14,6 +14,14 @@ import (
 
 var middlewareRegex = regexp.MustCompile(`@middleware\(([^)]+)\)`)
 
+type LambdaOnMutateEvent string
+
+const (
+	ADD    LambdaOnMutateEvent = "add"
+	UPDATE LambdaOnMutateEvent = "update"
+	DELETE LambdaOnMutateEvent = "delete"
+)
+
 type GoType struct {
 	TypeName *types.TypeName
 }
@@ -52,10 +60,11 @@ type Field2 struct {
 
 type Model struct {
 	*GoType
-	Name        string
-	Description string
-	Fields      []*Field2
-	Implements  []*GoType
+	Name           string
+	Description    string
+	Fields         []*Field2
+	Implements     []*GoType
+	LambdaOnMutate []LambdaOnMutateEvent
 }
 
 type Argument2 struct {
@@ -244,11 +253,26 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 			if it, ok := p.tree.ModelTree.Models[schemaType.Name]; ok {
 				return it.GoType, nil
 			}
+
 			it := &Model{
 				Name:        schemaType.Name,
 				Description: schemaType.Description,
 				GoType:      goType,
 			}
+
+			lambdaOnMutate := schemaType.Directives.ForName("lambdaOnMutate")
+			if lambdaOnMutate != nil {
+				if lambdaOnMutate.Arguments.ForName("add") != nil {
+					it.LambdaOnMutate = append(it.LambdaOnMutate, ADD)
+				}
+				if lambdaOnMutate.Arguments.ForName("update") != nil {
+					it.LambdaOnMutate = append(it.LambdaOnMutate, UPDATE)
+				}
+				if lambdaOnMutate.Arguments.ForName("delete") != nil {
+					it.LambdaOnMutate = append(it.LambdaOnMutate, DELETE)
+				}
+			}
+
 			for _, implementor := range p.schema.GetImplements(schemaType) {
 				interfaceType, err := p.parseType(implementor, false)
 				if err != nil {
