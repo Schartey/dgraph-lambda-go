@@ -1,4 +1,9 @@
-package resolver
+package api
+
+import (
+	"context"
+	"encoding/json"
+)
 
 type AuthHeader struct {
 	Key   string `json:"key"`
@@ -6,12 +11,12 @@ type AuthHeader struct {
 }
 
 type DBody struct {
-	AccessToken string                   `json:"X-Dgraph-AccessToken"`
-	Args        map[string]interface{}   `json:"args"`
-	AuthHeader  AuthHeader               `json:"authHeader"`
-	Resolver    string                   `json:"resolver"`
-	Parents     []map[string]interface{} `json:"parents"`
-	Event       Event                    `json:"event"`
+	AccessToken string                     `json:"X-Dgraph-AccessToken"`
+	Args        map[string]json.RawMessage `json:"args"`
+	AuthHeader  AuthHeader                 `json:"authHeader"`
+	Resolver    string                     `json:"resolver"`
+	Parents     json.RawMessage            `json:"parents"`
+	Event       Event                      `json:"event"`
 }
 
 type Event struct {
@@ -37,3 +42,12 @@ type UpdateEventInfo struct {
 type DeleteEventInfo struct {
 	RootUIDs []string `json:"rootUIDs"`
 }
+
+type MiddlewareFunc func(MiddlewareData) MiddlewareData
+
+type MiddlewareData struct {
+	Ctx   context.Context
+	Dbody DBody
+}
+
+type HandlerFunc func(ctx context.Context, input []byte, parents []byte, authHeader AuthHeader) (interface{}, error)

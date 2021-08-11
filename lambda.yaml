@@ -1,0 +1,22 @@
+schema:
+  - ../trendgraph/dgraph/*.graphql
+
+exec:
+  filename: lambda/generated/generated.go
+  package: generated
+
+model:
+  filename: lambda/model/models_gen.go
+  package: model
+
+autobind:
+  - "github.com/schartey/dgraph-lambda-go/examples/models"
+
+resolver:
+  layout: follow-schema
+  dir: lambda/resolvers
+  package: resolvers
+  filename_template: "{resolver}.resolver.go" # also allow "{name}.resolvers.go"
+
+server:
+  standalone: true
