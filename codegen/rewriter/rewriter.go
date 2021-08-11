@@ -37,7 +37,7 @@ func (r *Rewriter) Load() {
 	if resolverFileTemplate[1] == "resolver" {
 		pkg, err := pkgs.Load(path.Join(r.config.Root, r.config.Resolver.Dir))
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println(err.Error())
 		}
 		for _, f := range pkg.Syntax {
 			for _, d := range f.Decls {

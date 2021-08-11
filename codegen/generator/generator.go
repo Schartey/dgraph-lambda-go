@@ -318,10 +318,6 @@ func Generate(c *config.Config, r *rewriter.Rewriter) error {
 
 		pkgs[c.Resolver.Package] = types.NewPackage(path.Join(c.Root, c.Resolver.Dir), c.Resolver.Package)
 
-		for _, model := range c.ParsedTree.ModelTree.Models {
-			fmt.Println(len(model.LambdaOnMutate))
-		}
-
 		err = executerTemplate.Execute(resolverFile, struct {
 			FieldResolvers      map[string]*parser.FieldResolver2
 			Queries             map[string]*parser.Query2

@@ -121,7 +121,6 @@ autobind:
   # - "github.com/schartey/dgraph-lambda-go/examples/models"
 
 resolver:
-  layout: follow-schema
   dir: lambda/resolvers
   package: resolvers
   filename_template: "{resolver}.resolver.go" # also allow "{name}.resolvers.go"
@@ -150,7 +149,7 @@ func main() {
 	executer := {{ .GeneratedPackage }}.NewExecuter(resolver)
 	lambda := api.New(executer)
 	err := lambda.Serve()
-	fmt.Println(err)
+	fmt.Println(err.Error())
 	{{ else }}
 	r := chi.NewRouter()
 
