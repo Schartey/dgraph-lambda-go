@@ -100,6 +100,7 @@ func LoadConfig(filename string) (*Config, error) {
 		}
 
 		config.Sources = append(config.Sources, &ast.Source{Input: graphql.SchemaInputs + graphql.DirectiveDefs})
+		config.Sources = append(config.Sources, &ast.Source{Input: graphql.ApolloSchemaQueries + graphql.ApolloSchemaExtras})
 		config.Sources = append(config.Sources, &ast.Source{Name: filename, Input: string(schemaRaw)})
 	}
 

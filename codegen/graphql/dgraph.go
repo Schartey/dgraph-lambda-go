@@ -255,7 +255,8 @@ input StringHashFilter {
 }
 `
 
-	apolloSchemaExtras = `
+	ApolloSchemaExtras = `
+scalar _Entity
 scalar _Any
 scalar _FieldSet
 type _Service {
@@ -267,8 +268,8 @@ directive @provides(fields: _FieldSet!) on FIELD_DEFINITION
 directive @key(fields: _FieldSet!) on OBJECT | INTERFACE
 directive @extends on OBJECT | INTERFACE
 `
-	apolloSchemaQueries = `
-type Query {
+	ApolloSchemaQueries = `
+extend type Query {
 	_entities(representations: [_Any!]!): [_Entity]!
 	_service: _Service!
 }
