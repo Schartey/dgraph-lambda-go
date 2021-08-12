@@ -7,8 +7,9 @@ import (
 )
 
 var initCmd = &cli.Command{
-	Name:  "init",
-	Usage: "generate a basic server",
+	Name:        "init",
+	Usage:       "init",
+	Description: "generates folder structure and lambda-server. Call generate command afterwards",
 	Action: func(ctx *cli.Context) error {
 		generator.GenerateConfig()
 
@@ -16,7 +17,7 @@ var initCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
-		config.Init()
+		config.LoadSchema()
 		if err != nil {
 			return err
 		}

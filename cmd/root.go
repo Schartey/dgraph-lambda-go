@@ -30,7 +30,6 @@ func Execute() {
 	app.Action = initCmd.Action
 	app.Commands = []*cli.Command{
 		initCmd,
-		runCmd,
 		generateCmd,
 	}
 

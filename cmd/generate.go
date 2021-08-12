@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/codegen/generator"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
@@ -10,8 +8,9 @@ import (
 )
 
 var generateCmd = &cli.Command{
-	Name:  "generate",
-	Usage: "generate resolvers and types from schema",
+	Name:        "generate",
+	Usage:       "generate",
+	Description: "generates types, resolvers and middleware from schema in lambda.yaml",
 	Flags: []cli.Flag{
 		&cli.StringFlag{Name: "schema, s", Usage: "the schema filename"},
 	},
@@ -21,31 +20,20 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
-		if config.Init(); err != nil {
-			fmt.Println(err.Error())
+		if err := config.LoadSchema(); err != nil {
+			return err
 		}
 
 		rewriter := rewriter.New(config)
-		rewriter.Load()
 
-		err = generator.Generate(config, rewriter)
-		if err != nil {
+		if err := rewriter.Load(); err != nil {
 			return err
 		}
 
-		/*schemaFile := ctx.String("schema")
-
-		fmt.Println(schemaFile)
-
-		schema, err := graphql.SchemaLoaderFromFile(schemaFile)
-		if err != nil {
-			fmt.Println(err.Error())
+		if err := generator.Generate(config, rewriter); err != nil {
 			return err
 		}
 
-		generator := modelgen.NewGenerator()
-
-		generator.Parse(schema)*/
 		return nil
 	},
 }

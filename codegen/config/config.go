@@ -18,7 +18,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var ResolverTemplateRegex = regexp.MustCompile(`\{([^)]+)\}.resolver.*`)
+var resolverTemplateRegex = regexp.MustCompile(`\{([^)]+)\}.resolver.*`)
 
 type PackageConfig struct {
 	Filename string
@@ -41,27 +41,19 @@ type Config struct {
 	Server         struct {
 		Standalone bool `yaml:"standalone"`
 	} `yaml:"server"`
+
 	Sources             []*ast.Source      `yaml:"-"`
 	Packages            *internal.Packages `yaml:"-"`
 	Schema              *ast.Schema        `yaml:"-"`
+	Root                string             `yaml:"-"`
 	DefaultModelPackage *packages.Package  `yaml:"-"`
-
-	ParsedTree *parser.Tree
-	Root       string
-}
-
-// DefaultConfig creates a copy of the default config
-func DefaultConfig() *Config {
-	return &Config{
-		SchemaFilename: []string{"schema.graphql"},
-		Model:          PackageConfig{Filename: "models_gen.go"},
-		Exec:           PackageConfig{Filename: "generated.go"},
-	}
+	ParsedTree          *parser.Tree       `yaml:"-"`
+	ResolverFilename    string             `yaml:"-"`
 }
 
 // LoadConfig reads the lambda.yaml config file
 func LoadConfig(filename string) (*Config, error) {
-	config := DefaultConfig()
+	config := &Config{}
 
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -108,63 +100,62 @@ func LoadConfig(filename string) (*Config, error) {
 		}
 
 		config.Sources = append(config.Sources, &ast.Source{Input: graphql.SchemaInputs + graphql.DirectiveDefs})
-
 		config.Sources = append(config.Sources, &ast.Source{Name: filename, Input: string(schemaRaw)})
+	}
+
+	resolverTemplateSub := resolverTemplateRegex.FindStringSubmatch(config.Resolver.FilenameTemplate)
+	if len(resolverTemplateSub) > 1 {
+		if resolverTemplateSub[1] != "resolver" {
+			return nil, errors.New("Currently only {resolver}.resolver.go is supported as resolver filename template")
+		}
+	} else {
+		return nil, errors.New("Could not find match name for filename template")
+	}
+
+	if config.Packages == nil {
+		config.Packages = &internal.Packages{}
+
+		root, err := internal.GetModuleName()
+		if err != nil {
+			return nil, errors.Wrap(err, "Could not read project mod file")
+		}
+		defaultModelPath := root + "/" + path.Dir(config.Model.Filename)
+
+		defaultPackage, err := config.Packages.Load(defaultModelPath)
+		if err != nil {
+			return nil, errors.Wrap(err, "Could not load generated model package")
+		}
+		config.Root = root
+		config.DefaultModelPackage = defaultPackage
 	}
 
 	return config, nil
 }
 
-func (c *Config) Init() error {
-	if c.Packages == nil {
-		c.Packages = &internal.Packages{}
-
-		root, err := internal.GetModuleName()
-		if err != nil {
-			print(err.Error())
-		}
-		defaultModelPath := root + "/" + path.Dir(c.Model.Filename)
-
-		// Load Default Model Package
-		fmt.Println(defaultModelPath)
-		defaultPackage, err := c.Packages.Load(defaultModelPath)
-		if err != nil {
-			print(err.Error())
-			return err
-		}
-		fmt.Println(defaultPackage.Name)
-		c.Root = root
-		c.DefaultModelPackage = defaultPackage
-
-		// Load packages from yaml
-		for _, bind := range c.AutoBind {
-			c.Packages.Load(bind)
-		}
-	}
-
+func (c *Config) LoadSchema() error {
 	if c.Schema == nil {
-		if err := c.LoadSchema(); err != nil {
-			return err
+		if err := c.loadSchema(); err != nil {
+			return errors.Wrap(err, "Could not load schema")
 		}
 	}
 	parser := parser.NewParser(c.Schema, c.Packages, c.DefaultModelPackage)
 
 	parsedTree, err := parser.Parse()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Could not parse schema")
 	}
 
 	c.ParsedTree = parsedTree
 
-	err = c.Autobind()
+	err = c.autobind()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "Error while binding models")
 	}
 
 	return nil
 }
 
-func (c *Config) LoadSchema() error {
+func (c *Config) loadSchema() error {
 
 	schema, err := gqlparser.LoadSchema(c.Sources...)
 	if err != nil {
@@ -183,12 +174,16 @@ func (c *Config) LoadSchema() error {
 	return nil
 }
 
-func (c *Config) Autobind() error {
+func (c *Config) autobind() error {
 
 	for _, autobind := range c.AutoBind {
+		var pkg *packages.Package
 		pkg, err := c.Packages.PackageFromPath(autobind)
 		if err != nil {
-			fmt.Println(err)
+			pkg, err = c.Packages.Load(autobind)
+			if err != nil {
+				return errors.Wrap(err, "Could not load package")
+			}
 		}
 
 		for _, model := range c.ParsedTree.ModelTree.Models {

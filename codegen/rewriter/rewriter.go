@@ -27,17 +27,16 @@ func New(config *config.Config) *Rewriter {
 	return &Rewriter{config: config, files: files, RewriteBodies: rewriteBodies, DeprecatedBodies: deprecatedBodies}
 }
 
-func (r *Rewriter) Load() {
+func (r *Rewriter) Load() error {
 	r.RewriteBodies = make(map[string]string)
 	r.DeprecatedBodies = make(map[string]string)
 
 	pkgs := &internal.Packages{}
 	// field resolvers
-	resolverFileTemplate := config.ResolverTemplateRegex.FindStringSubmatch(r.config.Resolver.FilenameTemplate)
-	if resolverFileTemplate[1] == "resolver" {
+	if r.config.ResolverFilename == "resolver" {
 		pkg, err := pkgs.Load(path.Join(r.config.Root, r.config.Resolver.Dir))
 		if err != nil {
-			fmt.Println(err.Error())
+			return err
 		}
 		for _, f := range pkg.Syntax {
 			for _, d := range f.Decls {
@@ -112,6 +111,7 @@ func (r *Rewriter) Load() {
 			}
 		}
 	}
+	return nil
 }
 
 func (r *Rewriter) getSource(pkg *packages.Package, start, end token.Pos) string {

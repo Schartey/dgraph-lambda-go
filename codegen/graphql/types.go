@@ -12,17 +12,17 @@ import (
 )
 
 var inbuiltTypeToDgraph = map[string]string{
-	"ID":       "uid",
-	"Boolean":  "bool",
-	"Int":      "int",
-	"Int64":    "int",
-	"Float":    "float",
-	"String":   "string",
-	"DateTime": "dateTime",
-	"Password": "password",
-	//"Point":        "geo",
-	//"Polygon":      "geo",
-	//"MultiPolygon": "geo",
+	"ID":           "uid",
+	"Boolean":      "bool",
+	"Int":          "int",
+	"Int64":        "int",
+	"Float":        "float",
+	"String":       "string",
+	"DateTime":     "dateTime",
+	"Password":     "password",
+	"Point":        "geo",
+	"Polygon":      "geo",
+	"MultiPolygon": "geo",
 }
 
 type GoTypeDefinition struct {

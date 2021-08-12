@@ -50,7 +50,7 @@ type Interface struct {
 	Description string
 }
 
-type Field2 struct {
+type Field struct {
 	*GoType
 	Name           string
 	Description    string
@@ -62,34 +62,34 @@ type Model struct {
 	*GoType
 	Name           string
 	Description    string
-	Fields         []*Field2
+	Fields         []*Field
 	Implements     []*GoType
 	LambdaOnMutate []LambdaOnMutateEvent
 }
 
-type Argument2 struct {
+type Argument struct {
 	*GoType
 	Name string
 }
 
-type Query2 struct {
+type Query struct {
 	Name        string
 	Description string
-	Arguments   []*Argument2
+	Arguments   []*Argument
 	Return      *GoType
 	Middleware  []string
 }
 
-type Mutation2 struct {
+type Mutation struct {
 	Name        string
 	Description string
-	Arguments   []*Argument2
+	Arguments   []*Argument
 	Return      *GoType
 	Middleware  []string
 }
 
-type FieldResolver2 struct {
-	Field      *Field2
+type FieldResolver struct {
+	Field      *Field
 	Middleware []string
 }
 
@@ -107,9 +107,9 @@ type ModelTree struct {
 }
 
 type ResolverTree struct {
-	FieldResolvers map[string]*FieldResolver2
-	Queries        map[string]*Query2
-	Mutations      map[string]*Mutation2
+	FieldResolvers map[string]*FieldResolver
+	Queries        map[string]*Query
+	Mutations      map[string]*Mutation
 }
 
 type Parser struct {
@@ -128,9 +128,9 @@ func NewParser(schema *ast.Schema, packages *internal.Packages, defaultPackage *
 			Scalars:    make(map[string]*Scalar),
 		},
 		ResolverTree: &ResolverTree{
-			FieldResolvers: make(map[string]*FieldResolver2),
-			Queries:        make(map[string]*Query2),
-			Mutations:      make(map[string]*Mutation2),
+			FieldResolvers: make(map[string]*FieldResolver),
+			Queries:        make(map[string]*Query),
+			Mutations:      make(map[string]*Mutation),
 		},
 		Middleware: make(map[string]string),
 	},
@@ -219,7 +219,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 					return nil, err
 				}
 
-				var args []*Argument2
+				var args []*Argument
 				for _, arg := range field.Arguments {
 					argType := p.schema.Types[arg.Type.Name()]
 					argGoType, err := p.parseType(argType, false)
@@ -227,7 +227,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 						return nil, err
 					}
 
-					args = append(args, &Argument2{Name: arg.Name, GoType: argGoType})
+					args = append(args, &Argument{Name: arg.Name, GoType: argGoType})
 				}
 				out := middlewareRegex.FindAllStringSubmatch(field.Description, -1)
 
@@ -241,11 +241,11 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				}
 
 				if schemaType == p.schema.Query {
-					p.tree.ResolverTree.Queries[field.Name] = &Query2{Name: field.Name, Description: field.Description, Arguments: args, Return: returnGoType, Middleware: fieldMiddleware}
+					p.tree.ResolverTree.Queries[field.Name] = &Query{Name: field.Name, Description: field.Description, Arguments: args, Return: returnGoType, Middleware: fieldMiddleware}
 				}
 
 				if schemaType == p.schema.Mutation {
-					p.tree.ResolverTree.Mutations[field.Name] = &Mutation2{Name: field.Name, Description: field.Description, Arguments: args, Return: returnGoType, Middleware: fieldMiddleware}
+					p.tree.ResolverTree.Mutations[field.Name] = &Mutation{Name: field.Name, Description: field.Description, Arguments: args, Return: returnGoType, Middleware: fieldMiddleware}
 				}
 			}
 		} else {
@@ -289,7 +289,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 					return nil, err
 				}
 
-				modelField := &Field2{
+				modelField := &Field{
 					Name:           field.Name,
 					Description:    field.Description,
 					Tag:            `json:"` + field.Name + `"`,
@@ -311,7 +311,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 					for _, m := range fieldMiddleware {
 						p.tree.Middleware[m] = m
 					}
-					p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver2{Field: modelField, Middleware: fieldMiddleware}
+					p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver{Field: modelField, Middleware: fieldMiddleware}
 				}
 			}
 			p.tree.ModelTree.Models[it.Name] = it
