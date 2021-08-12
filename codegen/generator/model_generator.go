@@ -77,13 +77,11 @@ func generateModel(c *config.Config) error {
 }
 
 func modelRef(t *parser.GoType) string {
-	for _, te := range autobind {
-		if te == t.TypeName.Pkg().Path() {
-			return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
-		}
-	}
 	if t.TypeName.Exported() && t.TypeName.Pkg().Path() != defaultPackage.PkgPath {
-		return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+		return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+	}
+	if t.TypeName.Exported() {
+		return fmt.Sprintf("*%s", t.TypeName.Name())
 	}
 	return t.TypeName.Name()
 }

@@ -260,6 +260,8 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				GoType:      goType,
 			}
 
+			p.tree.ModelTree.Models[it.Name] = it
+
 			lambdaOnMutate := schemaType.Directives.ForName("lambdaOnMutate")
 			if lambdaOnMutate != nil {
 				if lambdaOnMutate.Arguments.ForName("add") != nil {
@@ -314,7 +316,6 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 					p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver{Field: modelField, Middleware: fieldMiddleware}
 				}
 			}
-			p.tree.ModelTree.Models[it.Name] = it
 			return it.GoType, nil
 		}
 
