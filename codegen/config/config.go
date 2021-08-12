@@ -108,6 +108,8 @@ func LoadConfig(filename string) (*Config, error) {
 	if len(resolverTemplateSub) > 1 {
 		if resolverTemplateSub[1] != "resolver" {
 			return nil, errors.New("Currently only {resolver}.resolver.go is supported as resolver filename template")
+		} else {
+			config.ResolverFilename = resolverTemplateSub[1]
 		}
 	} else {
 		return nil, errors.New("Could not find match name for filename template")
