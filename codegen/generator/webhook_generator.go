@@ -20,7 +20,7 @@ func generateWebhook(c *config.Config, r *rewriter.Rewriter) error {
 		if err != nil {
 			return err
 		}
-		f.Close()
+		defer f.Close()
 
 		pkgs := make(map[string]*types.Package)
 

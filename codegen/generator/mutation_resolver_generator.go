@@ -21,7 +21,7 @@ func generateMutationResolvers(c *config.Config, r *rewriter.Rewriter) error {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		f.Close()
+		defer f.Close()
 
 		pkgs := make(map[string]*types.Package)
 
