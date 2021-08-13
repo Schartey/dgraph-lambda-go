@@ -81,7 +81,7 @@ type QueryResolver struct {
 }
 
 {{- range $queryResolver := .QueryResolvers}}
-func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context, {{ $queryResolver.Arguments | argsW }}, authHeader api.AuthHeader) ({{$queryResolver.Return | pointer}}, error) { {{ body (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
+func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context, {{ $queryResolver.Arguments | argsW }}, authHeader api.AuthHeader) (*{{$queryResolver.Return | ref}}, error) { {{ body (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

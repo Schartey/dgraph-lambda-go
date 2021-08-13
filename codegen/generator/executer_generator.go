@@ -28,7 +28,7 @@ func generateExecuter(c *config.Config, r *rewriter.Rewriter) error {
 
 	for _, m := range c.ParsedTree.ResolverTree.Queries {
 		if m.Return.TypeName.Exported() {
-			pkgs[m.Return.TypeName.Pkg().Name()] = m.Return.TypeName.Pkg()
+			//pkgs[m.Return.TypeName.Pkg().Name()] = m.Return.TypeName.Pkg()
 		}
 
 		for _, f := range m.Arguments {
@@ -113,8 +113,8 @@ func NewExecuter(resolver *{{.ResolverPackageName}}.Resolver) api.ExecuterInterf
 func (e *Executer) Middleware(md *api.MiddlewareData) error {
 	var err error
 	switch md.Dbody.Resolver {
-		{{- range $fieldResolver := .FieldResolvers}}
-		case "{{$fieldResolver.Field.TypeName | typeName }}.{{$fieldResolver.Field.Name}}":
+		{{- range $fieldResolver := .FieldResolvers}}{{ if ne (len $fieldResolver.Middleware) 0 }}
+		case "{{$fieldResolver.Field.ParentTypeName }}.{{$fieldResolver.Field.Name}}":
 			{
 				{{- range $middleware := $fieldResolver.Middleware}}
 				if err = e.middlewareResolver.Middleware_{{$middleware}}(md); err != nil {
@@ -123,9 +123,9 @@ func (e *Executer) Middleware(md *api.MiddlewareData) error {
 				{{- end}}
 				break
 			}
-		{{- end }}
+		{{ end }}{{- end }}
 
-		{{- range $query := .Queries}}
+		{{- range $query := .Queries}}{{ if ne (len $query.Middleware) 0 }}
 		case "Query.{{$query.Name}}":
 			{
 				{{- range $middleware := $query.Middleware}}
@@ -135,8 +135,8 @@ func (e *Executer) Middleware(md *api.MiddlewareData) error {
 				{{- end}}
 				break
 			}
-		{{- end }}
-		{{- range $mutation := .Mutations}}
+		{{ end }}{{- end }}
+		{{- range $mutation := .Mutations}}{{ if ne (len $mutation.Middleware) 0 }}
 		case "Mutation.{{$mutation.Name}}":
 			{
 				{{- range $middleware := $mutation.Middleware}}
@@ -146,7 +146,7 @@ func (e *Executer) Middleware(md *api.MiddlewareData) error {
 				{{- end}}
 				break
 			}
-		{{- end }}
+		{{ end }}{{- end }}
 	}
 	return nil
 }
@@ -188,12 +188,12 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 					for _, parent := range parents {
 						{{$fieldResolver.Field.Name}}s = fullnames.append(e.fieldResolver.{{$fieldResolver.Field.GoType | ref }}_{{$fieldResolver.Field.Name}}(ctx, parent))
 					}*/
-					{{$fieldResolver.Field.Name | untitle }}s, err := e.fieldResolver.{{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx, parents, dbody.AuthHeader)
+					result, err := e.fieldResolver.{{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx, parents, dbody.AuthHeader)
 					if err != nil {
 						return nil, err
 					}
 
-					response, err = json.Marshal({{$fieldResolver.Field.Name | untitle }}s)
+					response, err = json.Marshal(result)
 					if err != nil {
 						return nil, err
 					}
@@ -208,12 +208,12 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 					var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
 					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
 					{{- end }}	
-					{{ $query.Return.TypeName | typeName | untitle }}, err := e.queryResolver.Query_{{$query.Name}}(ctx, {{$query.Arguments | args}}, dbody.AuthHeader)
+					result, err := e.queryResolver.Query_{{$query.Name}}(ctx, {{$query.Arguments | args}}, dbody.AuthHeader)
 					if err != nil {
 						return nil, err
 					}
 		
-					response, err = json.Marshal({{ $query.Return.TypeName | typeName | untitle }})
+					response, err = json.Marshal(result)
 					if err != nil {
 						return nil, err
 					}
@@ -227,12 +227,12 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 					var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
 					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
 					{{- end }}	
-					{{ $mutation.Return.TypeName | typeName | untitle }}, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx, {{$mutation.Arguments | args}}, dbody.AuthHeader)
+					result, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx, {{$mutation.Arguments | args}}, dbody.AuthHeader)
 					if err != nil {
 						return nil, err
 					}
 		
-					response, err = json.Marshal({{ $mutation.Return.TypeName | typeName | untitle }})
+					response, err = json.Marshal(result)
 					if err != nil {
 						return nil, err
 					}

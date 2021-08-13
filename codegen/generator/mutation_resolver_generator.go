@@ -81,7 +81,7 @@ type MutationResolver struct {
 }
 
 {{- range $mutationResolver := .MutationResolvers}}
-func (q *MutationResolver) Mutation_{{$mutationResolver.Name}}(ctx context.Context, {{ $mutationResolver.Arguments | argsW }}, authHeader api.AuthHeader) ({{$mutationResolver.Return | pointer}}, error) { {{ body (printf "Mutation_%s" $mutationResolver.Name) $.Rewriter }}}
+func (q *MutationResolver) Mutation_{{$mutationResolver.Name}}(ctx context.Context, {{ $mutationResolver.Arguments | argsW }}, authHeader api.AuthHeader) (*{{$mutationResolver.Return | ref}}, error) { {{ body (printf "Mutation_%s" $mutationResolver.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}
