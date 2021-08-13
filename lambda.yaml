@@ -16,7 +16,7 @@ resolver:
   layout: follow-schema
   dir: lambda/resolvers
   package: resolvers
-  filename_template: "{resolver}.resolver.go" # also allow "{name}.resolvers.go"
+  filename_template: "{resolver}.resolver.go" # should also allow "{name}.resolvers.go"
 
 server:
   standalone: true
