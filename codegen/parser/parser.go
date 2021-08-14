@@ -193,6 +193,40 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 		}
 
 		p.tree.ModelTree.Interfaces[it.Name] = it
+
+		for _, field := range schemaType.Fields {
+			fieldType := p.schema.Types[field.Type.Name()]
+
+			fieldGoType, err := p.parseType(fieldType, false)
+			if err != nil {
+				return nil, err
+			}
+
+			modelField := &Field{
+				Name:           field.Name,
+				Description:    field.Description,
+				Tag:            `json:"` + field.Name + `"`,
+				GoType:         fieldGoType,
+				ParentTypeName: schemaType.Name,
+			}
+
+			lambdaDirective := field.Directives.ForName("lambda")
+
+			if lambdaDirective != nil {
+				out := middlewareRegex.FindAllStringSubmatch(field.Description, -1)
+
+				var fieldMiddleware []string
+				for _, i := range out {
+					rawMiddleware := i[1]
+					json.Unmarshal([]byte(rawMiddleware), &fieldMiddleware)
+				}
+				for _, m := range fieldMiddleware {
+					p.tree.Middleware[m] = m
+				}
+				p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver{Field: modelField, Middleware: fieldMiddleware}
+			}
+		}
+
 		return it.GoType, nil
 
 	case ast.Object, ast.InputObject:
