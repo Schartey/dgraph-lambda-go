@@ -1,12 +1,19 @@
-on: push
+on: [push, pull_request]
 name: Run Tests
 jobs:
   test:
+    strategy:
+      matrix:
+        go-version: [1.16.x]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     name: run tests
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@master
-    - name: golang-action
-      uses: cedrickring/golang-action/go1.16@1.6.0
-    env:
-      GO111MODULE: "on"
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go-version }}
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Test
+      run: go test ./...
