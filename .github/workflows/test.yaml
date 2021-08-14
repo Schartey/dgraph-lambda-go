@@ -7,6 +7,6 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: golang-action
-      uses: cedrickring/golang-action@1.6.0
+      uses: cedrickring/golang-action/go1.16@1.6.0
     env:
       GO111MODULE: "on"
