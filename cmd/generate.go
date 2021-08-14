@@ -4,18 +4,30 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/codegen/generator"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/schartey/dgraph-lambda-go/internal"
 	"github.com/urfave/cli/v2"
 )
 
 var generateCmd = &cli.Command{
 	Name:        "generate",
-	Usage:       "generate",
+	Usage:       "generate -c \"lambda.yaml\"",
 	Description: "generates types, resolvers and middleware from schema in lambda.yaml",
 	Flags: []cli.Flag{
-		&cli.StringFlag{Name: "schema, s", Usage: "the schema filename"},
+		&cli.StringFlag{Name: "config", Aliases: []string{"c"}, Usage: "the lambda config file"},
 	},
 	Action: func(ctx *cli.Context) error {
-		config, err := config.LoadConfig("lambda.yaml")
+		configFile := ctx.String("config")
+
+		if configFile == "" {
+			configFile = "lambda.yaml"
+		}
+
+		moduleName, err := internal.GetModuleName()
+		if err != nil {
+			return err
+		}
+
+		config, err := config.LoadConfig(moduleName, configFile)
 		if err != nil {
 			return err
 		}

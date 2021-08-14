@@ -52,7 +52,7 @@ type Config struct {
 }
 
 // LoadConfig reads the lambda.yaml config file
-func LoadConfig(filename string) (*Config, error) {
+func LoadConfig(moduleName string, filename string) (*Config, error) {
 	config := &Config{}
 
 	b, err := ioutil.ReadFile(filename)
@@ -118,17 +118,13 @@ func LoadConfig(filename string) (*Config, error) {
 	if config.Packages == nil {
 		config.Packages = &internal.Packages{}
 
-		root, err := internal.GetModuleName()
-		if err != nil {
-			return nil, errors.Wrap(err, "Could not read project mod file")
-		}
-		defaultModelPath := root + "/" + path.Dir(config.Model.Filename)
+		defaultModelPath := moduleName + "/" + path.Dir(config.Model.Filename)
 
 		defaultPackage, err := config.Packages.Load(defaultModelPath)
 		if err != nil {
 			return nil, errors.Wrap(err, "Could not load generated model package")
 		}
-		config.Root = root
+		config.Root = moduleName
 		config.DefaultModelPackage = defaultPackage
 	}
 
