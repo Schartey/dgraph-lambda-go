@@ -63,7 +63,6 @@ func SchemaDefToGo(def *ast.Definition) (*goTypes.Package, error) {
 	return goTypes.NewPackage(reflectType.PkgPath(), reflectType.String()), nil
 }
 
-// Not supported: PointList
 func SchemaDefToGoDef(def *ast.Definition) (pkgPath string, typeName string, err error) {
 	dgraphTypeName := strings.ToLower(inbuiltTypeToDgraph[def.Name])
 	typeId, ok := types.TypeForName(dgraphTypeName)

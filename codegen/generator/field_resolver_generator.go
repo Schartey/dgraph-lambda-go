@@ -80,7 +80,7 @@ type FieldResolver struct {
 }
 
 {{- range $fieldResolver := .FieldResolvers}}
-func (f *FieldResolver) {{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx context.Context, parents []{{$fieldResolver.Field.GoType | pointer}}, authHeader api.AuthHeader) ([]{{$fieldResolver.Field.GoType | pointer}}, error) { {{ body (printf "%s_%s" $fieldResolver.Field.ParentTypeName $fieldResolver.Field.Name) $.Rewriter }}}
+func (f *FieldResolver) {{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx context.Context, parents []{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, authHeader api.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, error) { {{ body (printf "%s_%s" $fieldResolver.Field.ParentTypeName $fieldResolver.Field.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

@@ -2,6 +2,7 @@ package generator
 
 import (
 	"errors"
+	"fmt"
 	"go/types"
 	"os"
 	"path"
@@ -60,8 +61,32 @@ func generateQueryResolvers(c *config.Config, r *rewriter.Rewriter) error {
 	return errors.New("Resolver file pattern invalid")
 }
 
+func returnRef(t *parser.GoType, isArray bool) string {
+	for _, te := range autobind {
+		if te == t.TypeName.Pkg().Path() {
+			if isArray {
+				return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+			} else {
+				return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+			}
+		}
+	}
+	if t.TypeName.Exported() {
+		if isArray {
+			return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+		} else {
+			return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+		}
+	}
+	if isArray {
+		return fmt.Sprintf("[]*%s", t.TypeName.Name())
+	} else {
+		return t.TypeName.Name()
+	}
+}
+
 var queryResolverTemplate = template.Must(template.New("query-resolver").Funcs(template.FuncMap{
-	"ref":     resolverRef,
+	"ref":     returnRef,
 	"path":    pkgPath,
 	"pointer": pointer,
 	"argsW":   argsW,
@@ -81,7 +106,7 @@ type QueryResolver struct {
 }
 
 {{- range $queryResolver := .QueryResolvers}}
-func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context, {{ $queryResolver.Arguments | argsW }}, authHeader api.AuthHeader) (*{{$queryResolver.Return | ref}}, error) { {{ body (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
+func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context{{ if ne (len $queryResolver.Arguments) 0}}, {{ $queryResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) ({{ ref $queryResolver.Return.GoType $queryResolver.Return.IsArray }}, error) { {{ body (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

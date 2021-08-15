@@ -180,7 +180,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 			{{- range $fieldResolver := .FieldResolvers}}
 			case "{{$fieldResolver.Field.ParentTypeName }}.{{$fieldResolver.Field.Name}}":
 				{
-					var parents []{{$fieldResolver.Field.GoType | pointer }}
+					var parents []{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}
 					json.Unmarshal(parentsBytes, &parents)
 
 					// Dependent on generation loop or just direct
@@ -205,10 +205,10 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 			case "Query.{{$query.Name}}":
 				{
 					{{- range $arg := $query.Arguments }}
-					var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
+					var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
 					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
 					{{- end }}	
-					result, err := e.queryResolver.Query_{{$query.Name}}(ctx, {{$query.Arguments | args}}, dbody.AuthHeader)
+					result, err := e.queryResolver.Query_{{$query.Name}}(ctx{{ if ne (len $query.Arguments) 0}}, {{$query.Arguments | args}}{{end}}, dbody.AuthHeader)
 					if err != nil {
 						return nil, err
 					}
@@ -224,10 +224,10 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 			case "Mutation.{{$mutation.Name}}":
 				{
 					{{- range $arg := $mutation.Arguments }}
-					var {{ $arg.Name }} {{ $arg.GoType | pointer }} 
+					var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
 					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
 					{{- end }}	
-					result, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx, {{$mutation.Arguments | args}}, dbody.AuthHeader)
+					result, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx{{ if ne (len $mutation.Arguments) 0}}, {{$mutation.Arguments | args}}{{ end }}, dbody.AuthHeader)
 					if err != nil {
 						return nil, err
 					}

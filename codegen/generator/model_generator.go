@@ -76,14 +76,26 @@ func generateModel(c *config.Config) error {
 	return nil
 }
 
-func modelRef(t *parser.GoType) string {
+func modelRef(t *parser.GoType, isArray bool) string {
 	if t.TypeName.Exported() && t.TypeName.Pkg().Path() != defaultPackage.PkgPath {
-		return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+		if isArray {
+			return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+		} else {
+			return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+		}
 	}
 	if t.TypeName.Exported() {
-		return fmt.Sprintf("*%s", t.TypeName.Name())
+		if isArray {
+			return fmt.Sprintf("[]*%s", t.TypeName.Name())
+		} else {
+			return fmt.Sprintf("*%s", t.TypeName.Name())
+		}
 	}
-	return t.TypeName.Name()
+	if isArray {
+		return fmt.Sprintf("[]%s", t.TypeName.Name())
+	} else {
+		return t.TypeName.Name()
+	}
 }
 
 var modelTemplate = template.Must(template.New("model").Funcs(template.FuncMap{
@@ -107,7 +119,7 @@ type {{ .Name }} struct {
 	{{- range $field := .Fields }}
 		{{- with .Description }}
 		{{- end}}
-		{{ $field.Name | title }} {{$field.GoType | ref }} ` + "`{{$field.Tag}}`" + `
+		{{ $field.Name | title }} {{ ref $field.GoType $field.IsArray }} ` + "`{{$field.Tag}}`" + `
 	{{- end }}
 }
 {{- end }}

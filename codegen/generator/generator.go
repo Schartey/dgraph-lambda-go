@@ -79,11 +79,15 @@ func typeName(t *types.TypeName) string {
 	return t.Name()
 }
 
-func pointer(t *parser.GoType) string {
+func pointer(t *parser.GoType, isArray bool) string {
 	if !t.TypeName.Exported() {
 		return t.TypeName.Name()
 	} else {
-		return fmt.Sprintf("*%s", resolverRef(t))
+		if isArray {
+			return fmt.Sprintf("*[]%s", resolverRef(t))
+		} else {
+			return fmt.Sprintf("*%s", resolverRef(t))
+		}
 	}
 }
 
@@ -100,7 +104,7 @@ func argsW(args []*parser.Argument) string {
 	var arglist []string
 
 	for _, arg := range args {
-		arglist = append(arglist, fmt.Sprintf("%s %s", arg.Name, pointer(arg.GoType)))
+		arglist = append(arglist, fmt.Sprintf("%s %s", arg.Name, pointer(arg.GoType, arg.IsArray)))
 	}
 	return strings.Join(arglist, ",")
 }

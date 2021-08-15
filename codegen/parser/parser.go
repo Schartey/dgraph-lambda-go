@@ -56,6 +56,7 @@ type Field struct {
 	Description    string
 	Tag            string
 	ParentTypeName string
+	IsArray        bool
 }
 
 type Model struct {
@@ -69,14 +70,20 @@ type Model struct {
 
 type Argument struct {
 	*GoType
-	Name string
+	Name    string
+	IsArray bool
+}
+
+type Return struct {
+	*GoType
+	IsArray bool
 }
 
 type Query struct {
 	Name        string
 	Description string
 	Arguments   []*Argument
-	Return      *GoType
+	Return      *Return
 	Middleware  []string
 }
 
@@ -84,7 +91,7 @@ type Mutation struct {
 	Name        string
 	Description string
 	Arguments   []*Argument
-	Return      *GoType
+	Return      *Return
 	Middleware  []string
 }
 
@@ -157,7 +164,6 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 
 	pkgPath, typeName, err := graphql.SchemaDefToGoDef(schemaType)
 	if err != nil {
-		// Keep pkg as null, we check later with autobind
 		pkg = p.defaultPackage
 		typeName = schemaType.Name
 
@@ -208,6 +214,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				Tag:            `json:"` + field.Name + `"`,
 				GoType:         fieldGoType,
 				ParentTypeName: schemaType.Name,
+				IsArray:        graphql.IsArray(field.Type.String()),
 			}
 
 			lambdaDirective := field.Directives.ForName("lambda")
@@ -235,10 +242,10 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 		}
 		if schemaType == p.schema.Query || schemaType == p.schema.Mutation {
 			if it, ok := p.tree.ResolverTree.Queries[schemaType.Name]; ok {
-				return it.Return, nil
+				return it.Return.GoType, nil
 			}
 			if it, ok := p.tree.ResolverTree.Mutations[schemaType.Name]; ok {
-				return it.Return, nil
+				return it.Return.GoType, nil
 			}
 			for _, field := range schemaType.Fields {
 				lambdaDirective := field.Directives.ForName("lambda")
@@ -252,6 +259,10 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				if err != nil {
 					return nil, err
 				}
+				returnField := &Return{
+					GoType:  returnGoType,
+					IsArray: graphql.IsArray(field.Type.String()),
+				}
 
 				var args []*Argument
 				for _, arg := range field.Arguments {
@@ -261,7 +272,10 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 						return nil, err
 					}
 
-					args = append(args, &Argument{Name: arg.Name, GoType: argGoType})
+					args = append(args, &Argument{Name: arg.Name,
+						GoType:  argGoType,
+						IsArray: graphql.IsArray(field.Type.String()),
+					})
 				}
 				out := middlewareRegex.FindAllStringSubmatch(field.Description, -1)
 
@@ -275,11 +289,11 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				}
 
 				if schemaType == p.schema.Query {
-					p.tree.ResolverTree.Queries[field.Name] = &Query{Name: field.Name, Description: field.Description, Arguments: args, Return: returnGoType, Middleware: fieldMiddleware}
+					p.tree.ResolverTree.Queries[field.Name] = &Query{Name: field.Name, Description: field.Description, Arguments: args, Return: returnField, Middleware: fieldMiddleware}
 				}
 
 				if schemaType == p.schema.Mutation {
-					p.tree.ResolverTree.Mutations[field.Name] = &Mutation{Name: field.Name, Description: field.Description, Arguments: args, Return: returnGoType, Middleware: fieldMiddleware}
+					p.tree.ResolverTree.Mutations[field.Name] = &Mutation{Name: field.Name, Description: field.Description, Arguments: args, Return: returnField, Middleware: fieldMiddleware}
 				}
 			}
 		} else {
@@ -331,6 +345,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 					Tag:            `json:"` + field.Name + `"`,
 					GoType:         fieldGoType,
 					ParentTypeName: schemaType.Name,
+					IsArray:        graphql.IsArray(field.Type.String()),
 				}
 				it.Fields = append(it.Fields, modelField)
 

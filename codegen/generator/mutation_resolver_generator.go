@@ -61,7 +61,7 @@ func generateMutationResolvers(c *config.Config, r *rewriter.Rewriter) error {
 }
 
 var mutationResolverTemplate = template.Must(template.New("mutation-resolver").Funcs(template.FuncMap{
-	"ref":     resolverRef,
+	"ref":     returnRef,
 	"path":    pkgPath,
 	"pointer": pointer,
 	"argsW":   argsW,
@@ -81,7 +81,7 @@ type MutationResolver struct {
 }
 
 {{- range $mutationResolver := .MutationResolvers}}
-func (q *MutationResolver) Mutation_{{$mutationResolver.Name}}(ctx context.Context, {{ $mutationResolver.Arguments | argsW }}, authHeader api.AuthHeader) (*{{$mutationResolver.Return | ref}}, error) { {{ body (printf "Mutation_%s" $mutationResolver.Name) $.Rewriter }}}
+func (q *MutationResolver) Mutation_{{$mutationResolver.Name}}(ctx context.Context{{ if ne (len $mutationResolver.Arguments) 0}}, {{ $mutationResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) (*{{ ref $mutationResolver.Return.GoType $mutationResolver.Return.IsArray }}, error) { {{ body (printf "Mutation_%s" $mutationResolver.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}
