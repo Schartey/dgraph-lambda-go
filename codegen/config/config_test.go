@@ -13,10 +13,8 @@ var models = []string{"User", "Author", "Apple", "Figure", "Hotel"}
 var fieldResolvers = []string{"User.reputation", "User.rank", "User.active", "Post.additionalInfo", "Figure.size"}
 
 var queryResolvers = []string{"getApples", "getTopAuthors", "getHotelByName"}
-var ignoreQueries = []string{"ignoredQuery"}
 
 var mutationResolvers = []string{"newAuthor"}
-var ignoreMutations = []string{"ignoredMutation"}
 
 var middlewareResolvers = []string{"user", "admin"}
 
@@ -61,22 +59,10 @@ func Test_Config(t *testing.T) {
 			t.FailNow()
 		}
 	}
-	for _, q := range ignoreQueries {
-		if containsQueryResolver(q, config.ParsedTree.ResolverTree.Queries) {
-			fmt.Println("Parsed non lambda query: " + q)
-			t.FailNow()
-		}
-	}
 
 	for _, m := range mutationResolvers {
 		if !containsMutationResolver(m, config.ParsedTree.ResolverTree.Mutations) {
 			fmt.Println("Missing mutation-resolver after parsing: " + m)
-			t.FailNow()
-		}
-	}
-	for _, m := range ignoreMutations {
-		if containsMutationResolver(m, config.ParsedTree.ResolverTree.Mutations) {
-			fmt.Println("Parsed non lambda mutation: " + m)
 			t.FailNow()
 		}
 	}

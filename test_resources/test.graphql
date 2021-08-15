@@ -172,8 +172,6 @@ type Hotel @lambdaOnMutate(add: true, update: true, delete: true) {
 }
 
 type Query {
-    ignoredQuery(id: ID): [Banana]
-
     getApples: [Apple] @lambda
     """
     @middleware(["user", "admin"])
@@ -186,8 +184,6 @@ type Query {
 }
 
 type Mutation {
-    ignoredMutation(apple: AppleInput!): ID!
-
     """
     @middleware(["admin"])
     """
