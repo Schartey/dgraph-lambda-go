@@ -152,7 +152,7 @@ func (e *Executer) Middleware(md *api.MiddlewareData) error {
 }
 
 func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) {
-	if &dbody.Event != nil {
+	if dbody.Event.Operation != "" {
 		var err error
 		switch dbody.Event.TypeName {
 			{{- range $model := .Models}} {{ if ne (len $model.LambdaOnMutate) 0 }}
