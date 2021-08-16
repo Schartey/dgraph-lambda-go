@@ -26,14 +26,11 @@ func generateFieldResolvers(c *config.Config, r *rewriter.Rewriter) error {
 		var pkgs = make(map[string]*types.Package)
 
 		for _, m := range c.ParsedTree.ResolverTree.FieldResolvers {
-			if c.DefaultModelPackage.PkgPath != path.Join(c.Root, c.Resolver.Dir) {
-				if m.Field.TypeName.Exported() {
-					pkgs[m.Field.TypeName.Pkg().Name()] = m.Field.TypeName.Pkg()
-				}
-			} else {
-				if m.Field.TypeName.Exported() && m.Field.TypeName.Pkg().Path() != c.DefaultModelPackage.PkgPath {
-					pkgs[m.Field.TypeName.Pkg().Name()] = m.Field.TypeName.Pkg()
-				}
+			if m.Field.TypeName.Exported() {
+				pkgs[m.Field.TypeName.Pkg().Name()] = m.Field.TypeName.Pkg()
+			}
+			if m.Parent.TypeName.Exported() {
+				pkgs[m.Parent.TypeName.Pkg().Name()] = m.Parent.TypeName.Pkg()
 			}
 		}
 		if len(c.ParsedTree.ResolverTree.FieldResolvers) > 0 {
@@ -80,7 +77,7 @@ type FieldResolver struct {
 }
 
 {{- range $fieldResolver := .FieldResolvers}}
-func (f *FieldResolver) {{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx context.Context, parents []{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, authHeader api.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, error) { {{ body (printf "%s_%s" $fieldResolver.Field.ParentTypeName $fieldResolver.Field.Name) $.Rewriter }}}
+func (f *FieldResolver) {{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(ctx context.Context, parents []{{ pointer $fieldResolver.Parent.GoType false }}, authHeader api.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, error) { {{ body (printf "%s_%s" $fieldResolver.Parent.Name $fieldResolver.Field.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

@@ -21,8 +21,11 @@ func generateExecuter(c *config.Config, r *rewriter.Rewriter) error {
 	pkgs := make(map[string]*types.Package)
 
 	for _, m := range c.ParsedTree.ResolverTree.FieldResolvers {
-		if m.Field.TypeName.Exported() && m.Field.TypeName.Pkg().Path() != c.DefaultModelPackage.PkgPath {
+		if m.Field.TypeName.Exported() {
 			pkgs[m.Field.TypeName.Pkg().Name()] = m.Field.TypeName.Pkg()
+		}
+		if m.Parent.TypeName.Exported() {
+			pkgs[m.Parent.TypeName.Pkg().Name()] = m.Parent.TypeName.Pkg()
 		}
 	}
 
@@ -114,7 +117,7 @@ func (e *Executer) Middleware(md *api.MiddlewareData) error {
 	var err error
 	switch md.Dbody.Resolver {
 		{{- range $fieldResolver := .FieldResolvers}}{{ if ne (len $fieldResolver.Middleware) 0 }}
-		case "{{$fieldResolver.Field.ParentTypeName }}.{{$fieldResolver.Field.Name}}":
+		case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
 			{
 				{{- range $middleware := $fieldResolver.Middleware}}
 				if err = e.middlewareResolver.Middleware_{{$middleware}}(md); err != nil {
@@ -178,9 +181,9 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 
 		switch dbody.Resolver {
 			{{- range $fieldResolver := .FieldResolvers}}
-			case "{{$fieldResolver.Field.ParentTypeName }}.{{$fieldResolver.Field.Name}}":
+			case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
 				{
-					var parents []{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}
+					var parents []{{ pointer $fieldResolver.Parent.GoType false }}
 					json.Unmarshal(parentsBytes, &parents)
 
 					// Dependent on generation loop or just direct
@@ -188,7 +191,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 					for _, parent := range parents {
 						{{$fieldResolver.Field.Name}}s = fullnames.append(e.fieldResolver.{{$fieldResolver.Field.GoType | ref }}_{{$fieldResolver.Field.Name}}(ctx, parent))
 					}*/
-					result, err := e.fieldResolver.{{$fieldResolver.Field.ParentTypeName }}_{{$fieldResolver.Field.Name}}(ctx, parents, dbody.AuthHeader)
+					result, err := e.fieldResolver.{{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(ctx, parents, dbody.AuthHeader)
 					if err != nil {
 						return nil, err
 					}

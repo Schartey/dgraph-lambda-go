@@ -98,7 +98,7 @@ func (r *Rewriter) Load() error {
 				for _, fieldResolver := range r.config.ParsedTree.ResolverTree.FieldResolvers {
 					splitName := strings.Split(d.Name.Name, "_")
 
-					if splitName[0] == fieldResolver.Field.ParentTypeName && splitName[1] == fieldResolver.Field.Name {
+					if splitName[0] == fieldResolver.Parent.Name && splitName[1] == fieldResolver.Field.Name {
 						r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 						found = true
 						break

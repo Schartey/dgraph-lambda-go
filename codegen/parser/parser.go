@@ -52,11 +52,10 @@ type Interface struct {
 
 type Field struct {
 	*GoType
-	Name           string
-	Description    string
-	Tag            string
-	ParentTypeName string
-	IsArray        bool
+	Name        string
+	Description string
+	Tag         string
+	IsArray     bool
 }
 
 type Model struct {
@@ -95,8 +94,14 @@ type Mutation struct {
 	Middleware  []string
 }
 
+type Parent struct {
+	*GoType
+	Name string
+}
+
 type FieldResolver struct {
 	Field      *Field
+	Parent     *Parent
 	Middleware []string
 }
 
@@ -209,12 +214,11 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 			}
 
 			modelField := &Field{
-				Name:           field.Name,
-				Description:    field.Description,
-				Tag:            `json:"` + field.Name + `"`,
-				GoType:         fieldGoType,
-				ParentTypeName: schemaType.Name,
-				IsArray:        graphql.IsArray(field.Type.String()),
+				Name:        field.Name,
+				Description: field.Description,
+				Tag:         `json:"` + field.Name + `"`,
+				GoType:      fieldGoType,
+				IsArray:     graphql.IsArray(field.Type.String()),
 			}
 
 			lambdaDirective := field.Directives.ForName("lambda")
@@ -230,7 +234,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				for _, m := range fieldMiddleware {
 					p.tree.Middleware[m] = m
 				}
-				p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver{Field: modelField, Middleware: fieldMiddleware}
+				p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver{Field: modelField, Parent: &Parent{Name: schemaType.Name, GoType: it.GoType}, Middleware: fieldMiddleware}
 			}
 		}
 
@@ -340,12 +344,11 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				}
 
 				modelField := &Field{
-					Name:           field.Name,
-					Description:    field.Description,
-					Tag:            `json:"` + field.Name + `"`,
-					GoType:         fieldGoType,
-					ParentTypeName: schemaType.Name,
-					IsArray:        graphql.IsArray(field.Type.String()),
+					Name:        field.Name,
+					Description: field.Description,
+					Tag:         `json:"` + field.Name + `"`,
+					GoType:      fieldGoType,
+					IsArray:     graphql.IsArray(field.Type.String()),
 				}
 				it.Fields = append(it.Fields, modelField)
 
@@ -362,7 +365,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 					for _, m := range fieldMiddleware {
 						p.tree.Middleware[m] = m
 					}
-					p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver{Field: modelField, Middleware: fieldMiddleware}
+					p.tree.ResolverTree.FieldResolvers[field.Name] = &FieldResolver{Field: modelField, Parent: &Parent{Name: schemaType.Name, GoType: it.GoType}, Middleware: fieldMiddleware}
 				}
 			}
 			return it.GoType, nil

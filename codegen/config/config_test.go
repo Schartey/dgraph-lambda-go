@@ -95,7 +95,7 @@ func containsModel(modelName string, models map[string]*parser.Model) bool {
 
 func containsFieldResolver(fieldResolverName string, fieldResolvers map[string]*parser.FieldResolver) bool {
 	for _, fieldResolver := range fieldResolvers {
-		if fmt.Sprintf("%s.%s", fieldResolver.Field.ParentTypeName, fieldResolver.Field.Name) == fieldResolverName {
+		if fmt.Sprintf("%s.%s", fieldResolver.Parent.Name, fieldResolver.Field.Name) == fieldResolverName {
 			return true
 		}
 	}
