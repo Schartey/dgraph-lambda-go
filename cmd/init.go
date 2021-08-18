@@ -26,6 +26,10 @@ var initCmd = &cli.Command{
 			return err
 		}
 
+		if err := generator.GenerateConfig(configFile); err != nil {
+			return err
+		}
+
 		config, err := config.LoadConfig(moduleName, configFile)
 		if err != nil {
 			return err

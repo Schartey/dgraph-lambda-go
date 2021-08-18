@@ -1,21 +1,21 @@
 package generator
 
 import (
-	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
 
+	"github.com/pkg/errors"
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
 )
 
-func GenerateConfig() {
-	if t, err := os.Open("lambda.yaml"); os.IsNotExist(err) {
-		f, err := createFile("lambda.yaml")
+func GenerateConfig(filename string) error {
+	if t, err := os.Open(filename); os.IsNotExist(err) {
+		f, err := createFile(filename)
 		if err != nil {
-			panic(err)
+			return errors.Wrap(err, "Could not create config: "+filename)
 		}
 
 		lambdaTemplate.Execute(f, struct{}{})
@@ -23,33 +23,34 @@ func GenerateConfig() {
 	} else {
 		t.Close()
 	}
+	return nil
 }
 
 func Init(config *config.Config) error {
 
 	f, err := createFile(config.Exec.Filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	template.Must(template.New("exec").Parse("package "+config.Exec.Package)).Execute(f, struct{}{})
 	f.Close()
 
 	f, err = createFile(config.Model.Filename)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	template.Must(template.New("model").Parse("package "+config.Model.Package)).Execute(f, struct{}{})
 	f.Close()
 	f, err = createFile(config.Resolver.Dir)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	f.Close()
 
 	// Generate Resolver
 	f, err = createFile(path.Join(config.Resolver.Dir, "resolver.go"))
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	resolverTemplate.Execute(f, struct {
@@ -61,7 +62,7 @@ func Init(config *config.Config) error {
 
 	f, err = os.Create("server.go")
 	if err != nil {
-		fmt.Println(err.Error())
+		return err
 	}
 
 	serverTemplate.Execute(f, struct {
