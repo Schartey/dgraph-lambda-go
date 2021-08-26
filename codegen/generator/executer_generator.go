@@ -113,8 +113,7 @@ func NewExecuter(resolver *{{.ResolverPackageName}}.Resolver) api.ExecuterInterf
 	return Executer{fieldResolver: {{.ResolverPackageName}}.FieldResolver{Resolver: resolver}, queryResolver: {{.ResolverPackageName}}.QueryResolver{Resolver: resolver}, middlewareResolver: {{.ResolverPackageName}}.MiddlewareResolver{Resolver: resolver}, webhookResolver: {{.ResolverPackageName}}.WebhookResolver{Resolver: resolver}}
 }
 
-func (e *Executer) Middleware(md *api.MiddlewareData) error {
-	var err error
+func (e *Executer) Middleware(md *api.MiddlewareData) (err error) {
 	switch md.Dbody.Resolver {
 		{{- range $fieldResolver := .FieldResolvers}}{{ if ne (len $fieldResolver.Middleware) 0 }}
 		case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
@@ -154,9 +153,8 @@ func (e *Executer) Middleware(md *api.MiddlewareData) error {
 	return nil
 }
 
-func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) {
+func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte, err error) {
 	if dbody.Event.Operation != "" {
-		var err error
 		switch dbody.Event.TypeName {
 			{{- range $model := .Models}} {{ if ne (len $model.LambdaOnMutate) 0 }}
 			case "{{ $model.TypeName | typeName }}":
@@ -165,7 +163,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) ([]byte, error) 
 			{{ end }} {{ end }}
 		}
 	} else {
-		parentsBytes, err := dbody.Parents.MarshalJSON()
+		{{ if ne (len .FieldResolvers) 0}}parentsBytes, err := dbody.Parents.MarshalJSON(){{ end }}
 		if err != nil {
 			return nil, err
 		}
