@@ -2,6 +2,7 @@ package internal
 
 import (
 	"os"
+	"os/exec"
 
 	"golang.org/x/mod/modfile"
 )
@@ -17,4 +18,12 @@ func GetModuleName() (string, error) {
 	}
 
 	return file.Module.Mod.Path, nil
+}
+
+func Tidy() error {
+	cmd := exec.Command("go", "mod", "tidy")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
 }
