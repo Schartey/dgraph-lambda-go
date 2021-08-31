@@ -12,7 +12,9 @@ import (
 )
 
 var inbuiltTypeToDgraph = map[string]string{
-	"ID":           "uid",
+	// ID is interally int64, but is represented by hex string
+	//	"ID":           "uid",
+	"ID":           "string",
 	"Boolean":      "bool",
 	"Int":          "int",
 	"Int64":        "int",
