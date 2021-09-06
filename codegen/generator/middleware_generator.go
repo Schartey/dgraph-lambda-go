@@ -64,7 +64,7 @@ type MiddlewareResolver struct {
 }
 
 {{ range $middleware := .Middleware}}
-func (m *MiddlewareResolver) Middleware_{{$middleware}}(md *api.MiddlewareData) error { {{ body (printf "Middleware_%s" $middleware) $.Rewriter }}}
+func (m *MiddlewareResolver) Middleware_{{$middleware}}(md *api.MiddlewareData) *api.LambdaError { {{ body (printf "Middleware_%s" $middleware) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

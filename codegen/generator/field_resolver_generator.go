@@ -77,7 +77,7 @@ type FieldResolver struct {
 }
 
 {{- range $fieldResolver := .FieldResolvers}}
-func (f *FieldResolver) {{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(ctx context.Context, parents []{{ pointer $fieldResolver.Parent.GoType false }}, authHeader api.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, error) { {{ body (printf "%s_%s" $fieldResolver.Parent.Name $fieldResolver.Field.Name) $.Rewriter }}}
+func (f *FieldResolver) {{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(ctx context.Context, parents []{{ pointer $fieldResolver.Parent.GoType false }}, authHeader api.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, *api.LambdaError) { {{ body (printf "%s_%s" $fieldResolver.Parent.Name $fieldResolver.Field.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}
