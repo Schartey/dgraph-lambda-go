@@ -113,7 +113,7 @@ func NewExecuter(resolver *{{.ResolverPackageName}}.Resolver) api.ExecuterInterf
 	return Executer{fieldResolver: {{.ResolverPackageName}}.FieldResolver{Resolver: resolver}, queryResolver: {{.ResolverPackageName}}.QueryResolver{Resolver: resolver}, mutationResolver: {{.ResolverPackageName}}.MutationResolver{Resolver: resolver}, middlewareResolver: {{.ResolverPackageName}}.MiddlewareResolver{Resolver: resolver}, webhookResolver: {{.ResolverPackageName}}.WebhookResolver{Resolver: resolver}}
 }
 
-func (e *Executer) Middleware(md *api.MiddlewareData) (err error) {
+func (e *Executer) Middleware(md *api.MiddlewareData) (err *api.LambdaError) {
 	switch md.Dbody.Resolver {
 		{{- range $fieldResolver := .FieldResolvers}}{{ if ne (len $fieldResolver.Middleware) 0 }}
 		case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
@@ -153,7 +153,7 @@ func (e *Executer) Middleware(md *api.MiddlewareData) (err error) {
 	return nil
 }
 
-func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte, err error) {
+func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte, err *api.LambdaError) {
 	if dbody.Event.Operation != "" {
 		switch dbody.Event.TypeName {
 			{{- range $model := .Models}} {{ if ne (len $model.LambdaOnMutate) 0 }}
@@ -163,10 +163,11 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 			{{ end }} {{ end }}
 		}
 	} else {
-		{{ if ne (len .FieldResolvers) 0}}parentsBytes, err := dbody.Parents.MarshalJSON(){{ end }}
-		if err != nil {
-			return nil, err
+		{{ if ne (len .FieldResolvers) 0}}parentsBytes, underlyingError := dbody.Parents.MarshalJSON()
+		if underlyingError != nil {
+			return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}	
 		}
+		{{ end }}
 
 		md := &api.MiddlewareData{Ctx: ctx, Dbody: dbody}
 		if err = e.Middleware(md); err != nil {
@@ -194,9 +195,10 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 						return nil, err
 					}
 
-					response, err = json.Marshal(result)
-					if err != nil {
-						return nil, err
+					var underlyingError error
+					response, underlyingError := json.Marshal(result)
+					if underlyingError != nil {
+						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
 					}
 					break
 				}
@@ -213,10 +215,11 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					if err != nil {
 						return nil, err
 					}
-		
-					response, err = json.Marshal(result)
-					if err != nil {
-						return nil, err
+
+					var underlyingError error
+					response, underlyingError := json.Marshal(result)
+					if underlyingError != nil {
+						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
 					}
 					break
 				}
@@ -232,10 +235,11 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					if err != nil {
 						return nil, err
 					}
-		
-					response, err = json.Marshal(result)
-					if err != nil {
-						return nil, err
+
+					var underlyingError error
+					response, underlyingError := json.Marshal(result)
+					if underlyingError != nil {
+						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
 					}
 					break
 				}
@@ -243,6 +247,6 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 		}
 		return response, nil
 	}
-	return nil, errors.New("No resolver found")
+	return nil, &api.LambdaError{Underlying: errors.New("No resolver found"), Status: api.NOT_FOUND}
 }
 `))

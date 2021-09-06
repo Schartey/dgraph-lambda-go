@@ -106,7 +106,7 @@ type QueryResolver struct {
 }
 
 {{- range $queryResolver := .QueryResolvers}}
-func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context{{ if ne (len $queryResolver.Arguments) 0}}, {{ $queryResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) ({{ ref $queryResolver.Return.GoType $queryResolver.Return.IsArray }}, error) { {{ body (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
+func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context{{ if ne (len $queryResolver.Arguments) 0}}, {{ $queryResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) ({{ ref $queryResolver.Return.GoType $queryResolver.Return.IsArray }}, *api.LambdaError) { {{ body (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

@@ -11,7 +11,7 @@ import (
 )
 
 type ExecuterInterface interface {
-	Resolve(ctx context.Context, dbody DBody) ([]byte, error)
+	Resolve(ctx context.Context, dbody DBody) ([]byte, *LambdaError)
 }
 
 type Lambda struct {
@@ -26,13 +26,13 @@ func (l *Lambda) Route(w http.ResponseWriter, r *http.Request) {
 	res, err := l.resolve(w, r)
 	if err != nil {
 		fmt.Println(err.Error())
-		w.WriteHeader(500)
+		w.WriteHeader(int(err.Status))
 		w.Write([]byte(err.Error()))
 	}
 	w.Write(res)
 }
 
-func (l *Lambda) resolve(w http.ResponseWriter, r *http.Request) ([]byte, error) {
+func (l *Lambda) resolve(w http.ResponseWriter, r *http.Request) ([]byte, *LambdaError) {
 	decoder := json.NewDecoder(r.Body)
 
 	var dbody DBody
@@ -52,7 +52,7 @@ func (l *Lambda) Serve() error {
 		res, err := l.resolve(w, r)
 		if err != nil {
 			fmt.Println(err.Error())
-			w.WriteHeader(500)
+			w.WriteHeader(int(err.Status))
 			w.Write([]byte(err.Error()))
 		}
 		w.Write(res)
