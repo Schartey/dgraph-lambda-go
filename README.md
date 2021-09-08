@@ -2,7 +2,7 @@
 
 Go Library written to build Dgraph Lambda servers as an alternative to the [Dgraph JS Lambda Server](https://github.com/dgraph-io/dgraph-lambda)
 
-It is currently in **heavy development**! Please create an issue if something does not work correctly.
+It is currently in **development**! Please create an issue if something is not working correctly.
 
 
 ## Getting started
@@ -12,6 +12,8 @@ It is currently in **heavy development**! Please create an issue if something do
 - Then initialize the project by running ```go run github.com/schartey/dgraph-lambda-go init```.
 - Set path to your graphql schema in lambda.yaml
 - Generate types and resolvers ```go run github.com/schartey/dgraph-lambda-go generate```
+- Implement your lambda resolvers
+- Run your server ```go run server.go```
 
 
 ## Configuration
@@ -168,6 +170,11 @@ func (m *MiddlewareResolver) Middleware_auth(md *api.MiddlewareData) error {
 }
 ```
 
+## Known Issues
+
+- When running the generate command, ```go mod tidy``` is run for you. With Go 1.16 this will result in missing sum links. Therefor you have to run ```go get github.com/schartey/dgraph-lambda-go``` again.
+
+- In DGraph it is allowed to skip fields in types that are already implemented in the interface. The GraphQl parser used for this project is very strict on the GraphQl specs and does not allow this, so you have to copy all fields you are using in the interface to your type.
 
 ## Examples
 
