@@ -62,8 +62,17 @@ func generateQueryResolvers(c *config.Config, r *rewriter.Rewriter) error {
 }
 
 func returnRef(t *parser.GoType, isArray bool) string {
-	for _, te := range autobind {
-		if te == t.TypeName.Pkg().Path() {
+	if t.TypeName.Pkg() != nil {
+		for _, te := range autobind {
+			if te == t.TypeName.Pkg().Path() {
+				if isArray {
+					return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+				} else {
+					return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+				}
+			}
+		}
+		if t.TypeName.Exported() {
 			if isArray {
 				return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
 			} else {
@@ -71,15 +80,8 @@ func returnRef(t *parser.GoType, isArray bool) string {
 			}
 		}
 	}
-	if t.TypeName.Exported() {
-		if isArray {
-			return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
-		} else {
-			return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
-		}
-	}
 	if isArray {
-		return fmt.Sprintf("[]*%s", t.TypeName.Name())
+		return fmt.Sprintf("[]%s", t.TypeName.Name())
 	} else {
 		return t.TypeName.Name()
 	}
@@ -106,7 +108,7 @@ type QueryResolver struct {
 }
 
 {{- range $queryResolver := .QueryResolvers}}
-func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context{{ if ne (len $queryResolver.Arguments) 0}}, {{ $queryResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) ({{ ref $queryResolver.Return.GoType $queryResolver.Return.IsArray }}, *api.LambdaError) { {{ body (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
+func (q *QueryResolver) Query_{{$queryResolver.Name}}(ctx context.Context{{ if ne (len $queryResolver.Arguments) 0}}, {{ $queryResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) ({{ ref $queryResolver.Return.GoType $queryResolver.Return.IsArray }}, *api.LambdaError) { {{ body $queryResolver.Return.GoType $queryResolver.Return.IsArray (printf "Query_%s" $queryResolver.Name) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

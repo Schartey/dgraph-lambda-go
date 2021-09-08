@@ -27,6 +27,15 @@ var inbuiltTypeToDgraph = map[string]string{
 	"MultiPolygon": "geo",
 }
 
+var defaultReturnForType = map[string]string{
+	"string":  "\"\"",
+	"int":     "0",
+	"int64":   "0",
+	"bool":    "false",
+	"float":   "0.0",
+	"float64": "0.0",
+}
+
 type GoTypeDefinition struct {
 	TypeName string
 	PkgName  string
@@ -87,4 +96,12 @@ func IsArray(name string) bool {
 
 func IsDgraphType(name string) bool {
 	return inbuiltTypeToDgraph[name] != ""
+}
+
+func GetDefaultStringValueForType(name string) (string, error) {
+	if val, ok := defaultReturnForType[name]; !ok {
+		return "", errors.New("Could not find default value")
+	} else {
+		return val, nil
+	}
 }

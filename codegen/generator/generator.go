@@ -8,6 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/schartey/dgraph-lambda-go/codegen/graphql"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 	"golang.org/x/tools/go/packages"
@@ -56,14 +57,6 @@ func resolverRef(t *parser.GoType) string {
 			return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
 		}
 	}
-	for _, te := range autobind {
-		if te == t.TypeName.Pkg().Path() {
-			return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
-		}
-	}
-	if t.TypeName.Exported() {
-		return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
-	}
 	return t.TypeName.Name()
 }
 
@@ -94,7 +87,7 @@ func pointer(t *parser.GoType, isArray bool) string {
 		return t.TypeName.Name()
 	} else {
 		if isArray {
-			return fmt.Sprintf("*[]%s", resolverRef(t))
+			return fmt.Sprintf("[]*%s", resolverRef(t))
 		} else {
 			return fmt.Sprintf("*%s", resolverRef(t))
 		}
@@ -119,13 +112,23 @@ func argsW(args []*parser.Argument) string {
 	return strings.Join(arglist, ",")
 }
 
-func body(key string, rewriter *rewriter.Rewriter) string {
+func returnValue(t *parser.GoType, isArray bool) string {
+	defaultValue, err := graphql.GetDefaultStringValueForType(t.TypeName.Name())
+	fmt.Println(t.TypeName.Name())
+	if err != nil || isArray {
+		return "nil"
+	} else {
+		return defaultValue
+	}
+}
+
+func body(t *parser.GoType, isArray bool, key string, rewriter *rewriter.Rewriter) string {
 	if val, ok := rewriter.RewriteBodies[key]; ok {
 		return val
 	} else {
-		return `
-	return nil, nil
-`
+		return fmt.Sprintf(`
+	return %s, nil
+`, returnValue(t, isArray))
 	}
 }
 

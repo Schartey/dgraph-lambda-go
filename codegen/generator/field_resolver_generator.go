@@ -57,11 +57,21 @@ func generateFieldResolvers(c *config.Config, r *rewriter.Rewriter) error {
 	return errors.New("Resolver file pattern invalid")
 }
 
+func fieldResolverBody(key string, rewriter *rewriter.Rewriter) string {
+	if val, ok := rewriter.RewriteBodies[key]; ok {
+		return val
+	} else {
+		return `
+	return nil, nil
+`
+	}
+}
+
 var fieldResolverTemplate = template.Must(template.New("field-resolver").Funcs(template.FuncMap{
 	"ref":     modelRef,
 	"path":    pkgPath,
 	"pointer": pointer,
-	"body":    body,
+	"body":    fieldResolverBody,
 	"is":      is,
 }).Parse(`
 package {{.PackageName}}
