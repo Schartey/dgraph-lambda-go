@@ -4,6 +4,7 @@ Go Library written to build Dgraph Lambda servers as an alternative to the [Dgra
 
 It is currently in **development**! Please create an issue if something is not working correctly.
 
+If you would like to support me please visit my [:coffee:](https://ko-fi.com/schartey)
 
 ## Getting started
 
@@ -170,6 +171,32 @@ func (m *MiddlewareResolver) Middleware_auth(md *api.MiddlewareData) error {
 }
 ```
 
+## Inject custom dependencies
+
+Typically you want to at least inject a graphql/dql client into your resolvers. To do so just add your client to the Resolver struct
+```golang
+// Add objects to your desire
+type Resolver struct {
+    Dql *dgo.Dgraph
+}
+```
+and pass the client to the executor in your generated server.go file
+```golang
+dql := NewDqlClient()
+resolver := &resolvers.Resolver{ Dql: dql}
+executer := generated.NewExecuter(resolver)
+```
+Then you can access the client in your resolvers like this
+```golang
+func (q *QueryResolver) Query_randomUser(ctx context.Context, seed string, authHeader api.AuthHeader) (*model.User, error) {
+    // Oversimplified
+    user, err := s.dql.NewTxn().Do(ctx, req)
+	if err != nil {
+		return nil, &api.LambdaError{ Underlying: errors.New("User not found"), Status: api.NOT_FOUND}
+	}
+    return user, nil
+}
+```
 ## Known Issues
 
 - When running the generate command, ```go mod tidy``` is run for you. With Go 1.16 this will result in missing sum links. Therefor you have to run ```go get github.com/schartey/dgraph-lambda-go``` again.
