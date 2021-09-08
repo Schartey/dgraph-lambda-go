@@ -173,7 +173,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 		typeName = schemaType.Name
 
 		goType = &GoType{
-			TypeName: types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), typeName, nil),
+			TypeName: types.NewTypeName(0, nil, typeName, nil),
 		}
 	} else {
 		if pkgPath == "" {

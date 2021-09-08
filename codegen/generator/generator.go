@@ -46,6 +46,16 @@ func Generate(c *config.Config, r *rewriter.Rewriter) error {
 }
 
 func resolverRef(t *parser.GoType) string {
+	if t.TypeName.Pkg() != nil {
+		for _, te := range autobind {
+			if te == t.TypeName.Pkg().Path() {
+				return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+			}
+		}
+		if t.TypeName.Exported() {
+			return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
+		}
+	}
 	for _, te := range autobind {
 		if te == t.TypeName.Pkg().Path() {
 			return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
