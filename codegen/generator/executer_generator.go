@@ -57,7 +57,12 @@ func generateExecuter(c *config.Config, r *rewriter.Rewriter) error {
 	pkgs["errors"] = types.NewPackage("errors", "errors")
 	pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 	pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
-	pkgs["json"] = types.NewPackage("encoding/json", "json")
+
+	if len(c.ParsedTree.ResolverTree.FieldResolvers) > 0 ||
+		len(c.ParsedTree.ResolverTree.Queries) > 0 ||
+		len(c.ParsedTree.ResolverTree.Mutations) > 0 {
+		pkgs["json"] = types.NewPackage("encoding/json", "json")
+	}
 
 	pkgs[c.Resolver.Package] = types.NewPackage(path.Join(c.Root, c.Resolver.Dir), c.Resolver.Package)
 
@@ -196,7 +201,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					}
 
 					var underlyingError error
-					response, underlyingError := json.Marshal(result)
+					response, underlyingError = json.Marshal(result)
 					if underlyingError != nil {
 						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
 					}
@@ -217,7 +222,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					}
 
 					var underlyingError error
-					response, underlyingError := json.Marshal(result)
+					response, underlyingError = json.Marshal(result)
 					if underlyingError != nil {
 						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
 					}
@@ -237,7 +242,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					}
 
 					var underlyingError error
-					response, underlyingError := json.Marshal(result)
+					response, underlyingError = json.Marshal(result)
 					if underlyingError != nil {
 						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
 					}
