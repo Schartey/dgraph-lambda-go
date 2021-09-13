@@ -175,6 +175,40 @@ func (c *Config) loadSchema() error {
 
 func (c *Config) autobind() error {
 
+	if len(c.AutoBind) == 0 {
+		for _, model := range c.ParsedTree.ModelTree.Models {
+			if model.GoType.TypeName.Exported() {
+				if model.GoType.TypeName.Pkg() == nil {
+					model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), model.Name, nil)
+				}
+			}
+		}
+
+		for _, it := range c.ParsedTree.ModelTree.Interfaces {
+			if it.GoType.TypeName.Exported() {
+				if it.GoType.TypeName.Pkg() == nil {
+					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
+				}
+			}
+		}
+
+		for _, it := range c.ParsedTree.ModelTree.Enums {
+			if it.GoType.TypeName.Exported() {
+				if it.GoType.TypeName.Pkg() == nil {
+					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
+				}
+			}
+		}
+
+		for _, it := range c.ParsedTree.ModelTree.Scalars {
+			if it.GoType.TypeName.Exported() {
+				if it.GoType.TypeName.Pkg() == nil {
+					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
+				}
+			}
+		}
+	}
+
 	for _, autobind := range c.AutoBind {
 		var pkg *packages.Package
 		pkg, err := c.Packages.PackageFromPath(autobind)

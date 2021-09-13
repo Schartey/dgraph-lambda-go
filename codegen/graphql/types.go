@@ -2,8 +2,6 @@ package graphql
 
 import (
 	"errors"
-	"fmt"
-	goTypes "go/types"
 	"reflect"
 	"strings"
 
@@ -39,39 +37,6 @@ var defaultReturnForType = map[string]string{
 type GoTypeDefinition struct {
 	TypeName string
 	PkgName  string
-}
-
-// Not supported: PointList
-func SchemaTypeToGoType(name string, astType *ast.Type) (*GoTypeDefinition, error) {
-	dgraphTypeName := strings.ToLower(inbuiltTypeToDgraph[astType.Name()])
-	typeId, ok := types.TypeForName(dgraphTypeName)
-	if !ok {
-		return nil, errors.New("TypeId not found")
-	}
-	val := types.ValueForType(typeId)
-	reflectType := reflect.Indirect(reflect.ValueOf(val.Value)).Type()
-
-	goType := reflectType.String()
-
-	// Is Array
-	if strings.HasPrefix(astType.String(), "[") && (strings.HasSuffix(astType.String(), "]") || strings.HasSuffix(astType.String(), "]!")) {
-		goType = fmt.Sprintf("[]%s", goType)
-	}
-
-	return &GoTypeDefinition{TypeName: goType, PkgName: reflectType.PkgPath()}, nil
-}
-
-// Not supported: PointList
-func SchemaDefToGo(def *ast.Definition) (*goTypes.Package, error) {
-	dgraphTypeName := strings.ToLower(inbuiltTypeToDgraph[def.Name])
-	typeId, ok := types.TypeForName(dgraphTypeName)
-	if !ok {
-		return nil, errors.New("TypeId not found")
-	}
-	val := types.ValueForType(typeId)
-	reflectType := reflect.Indirect(reflect.ValueOf(val.Value)).Type()
-
-	return goTypes.NewPackage(reflectType.PkgPath(), reflectType.String()), nil
 }
 
 func SchemaDefToGoDef(def *ast.Definition) (pkgPath string, typeName string, err error) {
