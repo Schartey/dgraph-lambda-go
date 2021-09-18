@@ -4,6 +4,7 @@ import(
 	"fmt"
 	"github.com/twpayne/go-geom"
 	"io"
+	"github.com/schartey/dgraph-lambda-go/examples/models"
 	"strconv"
 	"time"
 )
@@ -48,6 +49,7 @@ type PointList struct {
 }
 type User struct {
 		UserID string `json:"userID"`
+		Credentials *models.Credentials `json:"credentials"`
 		Name string `json:"name"`
 		LastSignIn *time.Time `json:"lastSignIn"`
 		RecentScores []float64 `json:"recentScores"`

@@ -170,7 +170,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 	pkgPath, typeName, err := graphql.SchemaDefToGoDef(schemaType)
 	if err != nil {
 		goType = &GoType{
-			TypeName: types.NewTypeName(0, nil, typeName, nil),
+			TypeName: types.NewTypeName(0, nil, schemaType.Name, nil),
 		}
 	} else {
 		if pkgPath == "" {
@@ -186,7 +186,6 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				}
 			}
 
-			fmt.Println(pkg)
 			goType = &GoType{
 				TypeName: types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), typeName, nil),
 			}

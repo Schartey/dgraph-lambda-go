@@ -66,7 +66,7 @@ func (e *Executer) Middleware(md *api.MiddlewareData) (err *api.LambdaError) {
 
 func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte, err *api.LambdaError) {
 	if dbody.Event.Operation != "" {
-		switch dbody.Event.TypeName {       
+		switch dbody.Event.TypeName {         
 			case "Hotel":
 				err = e.webhookResolver.Webhook_Hotel(ctx, dbody.Event)
 				return nil, err

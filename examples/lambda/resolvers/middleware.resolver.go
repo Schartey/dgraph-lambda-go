@@ -11,11 +11,11 @@ type MiddlewareResolver struct {
 }
 
 
-func (m *MiddlewareResolver) Middleware_admin(md *api.MiddlewareData) *api.LambdaError {    
+func (m *MiddlewareResolver) Middleware_admin(md *api.MiddlewareData) *api.LambdaError {      
 	return nil
 }
 
-func (m *MiddlewareResolver) Middleware_user(md *api.MiddlewareData) *api.LambdaError {    
+func (m *MiddlewareResolver) Middleware_user(md *api.MiddlewareData) *api.LambdaError {      
 	return nil
 }
 
