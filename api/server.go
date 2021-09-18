@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -35,13 +36,16 @@ func (l *Lambda) Route(w http.ResponseWriter, r *http.Request) {
 func (l *Lambda) resolve(w http.ResponseWriter, r *http.Request) ([]byte, *LambdaError) {
 	decoder := json.NewDecoder(r.Body)
 
-	var dbody DBody
+	var dbody *DBody
 	err := decoder.Decode(&dbody)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
+	if dbody == nil {
+		return nil, &LambdaError{Underlying: errors.New("body cannot be nil"), Status: http.StatusBadRequest}
+	}
 
-	return l.Executor.Resolve(r.Context(), dbody)
+	return l.Executor.Resolve(r.Context(), *dbody)
 }
 
 func (l *Lambda) Serve() error {
