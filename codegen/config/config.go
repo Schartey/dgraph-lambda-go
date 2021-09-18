@@ -55,6 +55,12 @@ type Config struct {
 func LoadConfig(moduleName string, filename string) (*Config, error) {
 	config := &Config{}
 
+	abs, err := filepath.Abs(filename)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to detect config folder")
+	}
+	abs = filepath.Dir(abs)
+
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, errors.Wrap(err, "unable to read config")
@@ -70,7 +76,9 @@ func LoadConfig(moduleName string, filename string) (*Config, error) {
 	for _, f := range preGlobbing {
 		var matches []string
 
-		matches, err = filepath.Glob(f)
+		fp := filepath.Join(abs, f)
+
+		matches, err = filepath.Glob(fp)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to glob schema filename %s", f)
 		}
@@ -155,7 +163,6 @@ func (c *Config) LoadSchema() error {
 }
 
 func (c *Config) loadSchema() error {
-
 	schema, err := gqlparser.LoadSchema(c.Sources...)
 	if err != nil {
 		return err
