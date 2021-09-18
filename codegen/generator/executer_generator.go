@@ -55,7 +55,7 @@ func generateExecuter(c *config.Config, r *rewriter.Rewriter) error {
 
 	pkgs["context"] = types.NewPackage("context", "context")
 	pkgs["errors"] = types.NewPackage("errors", "errors")
-	pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
+	pkgs["http"] = types.NewPackage("net/http", "http")
 	pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 
 	if len(c.ParsedTree.ResolverTree.FieldResolvers) > 0 ||
@@ -170,7 +170,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 	} else {
 		{{ if ne (len .FieldResolvers) 0}}parentsBytes, underlyingError := dbody.Parents.MarshalJSON()
 		if underlyingError != nil {
-			return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}	
+			return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}	
 		}
 		{{ end }}
 
@@ -203,7 +203,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					var underlyingError error
 					response, underlyingError = json.Marshal(result)
 					if underlyingError != nil {
-						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
+						return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
 					}
 					break
 				}
@@ -224,7 +224,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					var underlyingError error
 					response, underlyingError = json.Marshal(result)
 					if underlyingError != nil {
-						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
+						return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
 					}
 					break
 				}
@@ -244,7 +244,7 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 					var underlyingError error
 					response, underlyingError = json.Marshal(result)
 					if underlyingError != nil {
-						return nil, &api.LambdaError{Underlying: underlyingError, Status: api.INTERNAL_ERROR}
+						return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
 					}
 					break
 				}
@@ -252,6 +252,6 @@ func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte
 		}
 		return response, nil
 	}
-	return nil, &api.LambdaError{Underlying: errors.New("No resolver found"), Status: api.NOT_FOUND}
+	return nil, &api.LambdaError{Underlying: errors.New("No resolver found"), Status: http.StatusNotFound}
 }
 `))
