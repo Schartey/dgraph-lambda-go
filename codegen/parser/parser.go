@@ -3,6 +3,7 @@ package parser
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"go/types"
 	"regexp"
 
@@ -160,18 +161,14 @@ func (p *Parser) Parse() (*Tree, error) {
 
 func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType, error) {
 	if mustLambda && !p.hasLambda(schemaType) {
-		return nil, errors.New("Type has no lambda field")
+		return nil, errors.New("type has no lambda field")
 	}
 
 	var goType *GoType
-	var pkg *packages.Package
 	var err error
 
 	pkgPath, typeName, err := graphql.SchemaDefToGoDef(schemaType)
 	if err != nil {
-		pkg = p.defaultPackage
-		typeName = schemaType.Name
-
 		goType = &GoType{
 			TypeName: types.NewTypeName(0, nil, typeName, nil),
 		}
@@ -181,11 +178,15 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				TypeName: types.NewTypeName(0, nil, typeName, nil),
 			}
 		} else {
-			pkg, err = p.packages.PackageFromPath(pkgPath)
+			pkg, err := p.packages.PackageFromPath(pkgPath)
 			if err != nil {
 				pkg, err = p.packages.Load(pkgPath)
+				if err != nil {
+					fmt.Println("Could not load package")
+				}
 			}
 
+			fmt.Println(pkg)
 			goType = &GoType{
 				TypeName: types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), typeName, nil),
 			}
@@ -242,7 +243,8 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 
 	case ast.Object, ast.InputObject:
 		if schemaType == p.schema.Subscription {
-			return nil, errors.New("Subscription not supported")
+			fmt.Println("Subscription not supported - skipping")
+			//return nil, errors.New("subscription not supported")
 		}
 		if schemaType == p.schema.Query || schemaType == p.schema.Mutation {
 			if it, ok := p.tree.ResolverTree.Queries[schemaType.Name]; ok {

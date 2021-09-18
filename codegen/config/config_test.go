@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
+	"github.com/schartey/dgraph-lambda-go/internal"
 )
 
-var moduleName = "test"
 var autobindValues = []string{"github.com/schartey/dgraph-lambda-go/examples/models"}
 var models = []string{"User", "Author", "Apple", "Figure", "Hotel"}
 var fieldResolvers = []string{"User.reputation", "User.rank", "User.active", "Post.additionalInfo", "Figure.size"}
@@ -19,8 +19,13 @@ var mutationResolvers = []string{"newAuthor"}
 var middlewareResolvers = []string{"user", "admin"}
 
 func Test_Config(t *testing.T) {
+	fmt.Println("test")
+	moduleName, err := internal.GetModuleName()
+	if err != nil {
+		t.FailNow()
+	}
 
-	config, err := LoadConfig("test", "../../test_resources/lamdba.yaml")
+	config, err := LoadConfig(moduleName, "../../lambda.yaml")
 	if err != nil {
 		fmt.Println(err.Error())
 		t.FailNow()

@@ -38,7 +38,7 @@ func (p *Packages) Load(importPath string) (*packages.Package, error) {
 func (p *Packages) PackageFromPath(importPath string) (*packages.Package, error) {
 
 	if pkg, found := p.packages[importPath]; !found {
-		return nil, errors.New("Package not found")
+		return nil, errors.New("package not found")
 	} else {
 		return pkg, nil
 	}
