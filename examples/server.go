@@ -6,12 +6,12 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/schartey/dgraph-lambda-go/api"
-	"github.com/schartey/dgraph-lambda-go/lambda"
-	"github.com/schartey/dgraph-lambda-go/lambda/generated"
+	"github.com/schartey/dgraph-lambda-go/examples/lambda/generated"
+	"github.com/schartey/dgraph-lambda-go/examples/lambda/resolvers"
 )
 
 func RunWithServer() {
-	resolver := &lambda.Resolver{}
+	resolver := &resolvers.Resolver{}
 	executer := generated.NewExecuter(resolver)
 	lambda := api.New(executer)
 	err := lambda.Serve()
@@ -21,7 +21,7 @@ func RunWithServer() {
 func RunWithRoute() {
 	r := chi.NewRouter()
 
-	resolver := &lambda.Resolver{}
+	resolver := &resolvers.Resolver{}
 	executer := generated.NewExecuter(resolver)
 	lambda := api.New(executer)
 

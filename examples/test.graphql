@@ -1,5 +1,11 @@
+type Credentials {
+    id: ID!
+    firebaseId: String!
+}
+
 type User @lambdaOnMutate(add: true, update: true, delete: true) {
     userID: ID!
+    credentials: Credentials!
     name: String!
     lastSignIn: DateTime @search(by: [year])
     """

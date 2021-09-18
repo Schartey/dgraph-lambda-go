@@ -1,12 +1,12 @@
 schema:
-  - ../trendgraph/dgraph/*.graphql
+  - ./examples/*.graphql
 
 exec:
-  filename: lambda/generated/generated.go
+  filename: examples/lambda/generated/generated.go
   package: generated
 
 model:
-  filename: lambda/model/models_gen.go
+  filename: examples/lambda/model/models_gen.go
   package: model
 
 autobind:
@@ -14,7 +14,7 @@ autobind:
 
 resolver:
   layout: follow-schema
-  dir: lambda/resolvers
+  dir: examples/lambda/resolvers
   package: resolvers
   filename_template: "{resolver}.resolver.go" # should also allow "{name}.resolvers.go"
 
