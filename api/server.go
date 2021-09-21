@@ -3,9 +3,10 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/pkg/errors"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -13,11 +14,6 @@ import (
 
 type ExecuterInterface interface {
 	Resolve(ctx context.Context, request *Request) ([]byte, *LambdaError)
-	resolveField(ctx context.Context, request *Request) ([]byte, *LambdaError)
-	resolveQuery(ctx context.Context, request *Request) ([]byte, *LambdaError)
-	resolveMutation(ctx context.Context, request *Request) ([]byte, *LambdaError)
-	resolveWebhook(ctx context.Context, request *Request) *LambdaError
-	middleware(mc *MiddlewareContext) *LambdaError
 }
 
 type Lambda struct {
@@ -49,8 +45,19 @@ func (l *Lambda) resolve(w http.ResponseWriter, r *http.Request) ([]byte, *Lambd
 	if request == nil {
 		return nil, &LambdaError{Underlying: errors.New("body cannot be nil"), Status: http.StatusBadRequest}
 	}
+	err = l.validate(request)
+	if err != nil {
+		return nil, &LambdaError{Underlying: errors.Wrap(err, "Invalid request"), Status: http.StatusBadRequest}
+	}
 
 	return l.Executor.Resolve(r.Context(), request)
+}
+
+func (l *Lambda) validate(request *Request) error {
+	if request.Resolver == "" && request.Event.Operation == "" {
+		return errors.New("Resolver or Operation missing")
+	}
+	return nil
 }
 
 func (l *Lambda) Serve() error {

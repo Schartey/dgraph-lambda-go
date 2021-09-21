@@ -6,6 +6,7 @@ require (
 	github.com/dgraph-io/dgraph v1.2.8
 	github.com/go-chi/chi v3.3.2+incompatible
 	github.com/pkg/errors v0.9.1
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/twpayne/go-geom v1.4.0
 	github.com/urfave/cli/v2 v2.3.0
 	github.com/vektah/gqlparser/v2 v2.2.0
