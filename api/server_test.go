@@ -8,12 +8,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 type ExecuterMock struct {
+	mock.Mock
 }
 
 func (e ExecuterMock) Resolve(ctx context.Context, request *Request) ([]byte, *LambdaError) {
+	e.Called(ctx, request)
 	return nil, nil
 }
 
@@ -30,6 +33,18 @@ func Test_Route_Invalid_Body(t *testing.T) {
 		{body: bytes.NewBufferString("[]"), expected: http.StatusBadRequest},
 		{body: bytes.NewBufferString("invalid"), expected: http.StatusBadRequest},
 		{body: bytes.NewBufferString("{"), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString("{}"), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"" }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "event": { "operation":""} }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"", "event": { "operation":""} }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"User.test" }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"User.test", "event": { "operation":""} }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"Query.test" }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"Query.test", "parents": "" }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"Query.test", "args": "" }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"Mutation.test" }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"Mutation.test", "parents": "" }`), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"Mutation.test", "args": "" }`), expected: http.StatusBadRequest},
 	}
 
 	for _, request := range requests {
@@ -48,14 +63,18 @@ func Test_Route_Invalid_Body(t *testing.T) {
 }
 
 func Test_Route_Valid_Body(t *testing.T) {
-	em := &ExecuterMock{}
+	em := ExecuterMock{}
+	em.On("Resolve", mock.Anything, mock.Anything).Return(nil, nil)
+
 	lambda := New(em)
 
 	var requests = []struct {
 		body     *bytes.Buffer
 		expected int
 	}{
-		{body: bytes.NewBufferString("{}"), expected: http.StatusBadRequest},
+		{body: bytes.NewBufferString(`{ "resolver":"User.test", "parents": "" }`), expected: http.StatusOK},
+		{body: bytes.NewBufferString(`{ "resolver":"Query.test", "args": {} }`), expected: http.StatusOK},
+		{body: bytes.NewBufferString(`{ "resolver":"Mutation.test", "args": {} }`), expected: http.StatusOK},
 	}
 
 	for _, request := range requests {
@@ -65,5 +84,6 @@ func Test_Route_Valid_Body(t *testing.T) {
 		lambda.Route(w, req)
 
 		assert.Equal(t, request.expected, w.Result().StatusCode)
+		em.AssertExpectations(t)
 	}
 }
