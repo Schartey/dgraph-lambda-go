@@ -10,7 +10,7 @@ type AuthHeader struct {
 	Value string `json:"value"`
 }
 
-type DBody struct {
+type Request struct {
 	AccessToken string                     `json:"X-Dgraph-AccessToken"`
 	Args        map[string]json.RawMessage `json:"args"`
 	AuthHeader  AuthHeader                 `json:"authHeader"`
@@ -43,11 +43,11 @@ type DeleteEventInfo struct {
 	RootUIDs []string `json:"rootUIDs"`
 }
 
-type MiddlewareFunc func(MiddlewareData) MiddlewareData
+type MiddlewareFunc func(MiddlewareContext) MiddlewareContext
 
-type MiddlewareData struct {
-	Ctx   context.Context
-	Dbody DBody
+type MiddlewareContext struct {
+	Ctx     context.Context
+	Request *Request
 }
 
 type HandlerFunc func(ctx context.Context, input []byte, parents []byte, authHeader AuthHeader) (interface{}, error)

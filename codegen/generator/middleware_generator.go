@@ -58,13 +58,17 @@ import(
 	"{{ $pkg | path }}"{{- end}}
 )
 
-/** Put these into resolvers.go  or similar **/
+type MiddlewareResolverInterface interface {
+{{- range $middleware := .Middleware}}
+	Middleware_{{$middleware}}(mc *api.MiddlewareContext) *api.LambdaError{{ end }}
+}
+
 type MiddlewareResolver struct {
 	*Resolver
 }
 
 {{ range $middleware := .Middleware}}
-func (m *MiddlewareResolver) Middleware_{{$middleware}}(md *api.MiddlewareData) *api.LambdaError { {{ body (printf "Middleware_%s" $middleware) $.Rewriter }}}
+func (m *MiddlewareResolver) Middleware_{{$middleware}}(mc *api.MiddlewareContext) *api.LambdaError { {{ body (printf "Middleware_%s" $middleware) $.Rewriter }}}
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}

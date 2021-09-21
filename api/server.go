@@ -12,7 +12,12 @@ import (
 )
 
 type ExecuterInterface interface {
-	Resolve(ctx context.Context, dbody DBody) ([]byte, *LambdaError)
+	Resolve(ctx context.Context, request *Request) ([]byte, *LambdaError)
+	resolveField(ctx context.Context, request *Request) ([]byte, *LambdaError)
+	resolveQuery(ctx context.Context, request *Request) ([]byte, *LambdaError)
+	resolveMutation(ctx context.Context, request *Request) ([]byte, *LambdaError)
+	resolveWebhook(ctx context.Context, request *Request) *LambdaError
+	middleware(mc *MiddlewareContext) *LambdaError
 }
 
 type Lambda struct {
@@ -36,16 +41,16 @@ func (l *Lambda) Route(w http.ResponseWriter, r *http.Request) {
 func (l *Lambda) resolve(w http.ResponseWriter, r *http.Request) ([]byte, *LambdaError) {
 	decoder := json.NewDecoder(r.Body)
 
-	var dbody *DBody
-	err := decoder.Decode(&dbody)
+	var request *Request
+	err := decoder.Decode(&request)
 	if err != nil {
-		fmt.Println(err.Error())
+		return nil, &LambdaError{Underlying: err, Status: http.StatusBadRequest}
 	}
-	if dbody == nil {
+	if request == nil {
 		return nil, &LambdaError{Underlying: errors.New("body cannot be nil"), Status: http.StatusBadRequest}
 	}
 
-	return l.Executor.Resolve(r.Context(), *dbody)
+	return l.Executor.Resolve(r.Context(), request)
 }
 
 func (l *Lambda) Serve() error {

@@ -70,7 +70,11 @@ import(
 	"{{ $pkg | path }}"{{- end}}
 )
 
-/** Put these into resolvers.go  or similar **/
+type WebhookResolverInterface interface {
+{{- range $model := .Models}}
+	Webhook_{{ $model.TypeName | typeName }}(ctx context.Context, event api.Event) *api.LambdaError{{ end }}
+}
+
 type WebhookResolver struct {
 	*Resolver
 }

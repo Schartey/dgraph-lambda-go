@@ -75,7 +75,11 @@ import(
 	"{{ $pkg | path }}"{{- end}}
 )
 
-/** Put these into resolvers.go  or similar **/
+type MutationResolverInterface interface {
+{{- range $mutationResolver := .MutationResolvers}}
+	Mutation_{{$mutationResolver.Name}}(ctx context.Context{{ if ne (len $mutationResolver.Arguments) 0}}, {{ $mutationResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) ({{ ref $mutationResolver.Return.GoType $mutationResolver.Return.IsArray }}, *api.LambdaError){{ end }}
+}
+
 type MutationResolver struct {
 	*Resolver
 }

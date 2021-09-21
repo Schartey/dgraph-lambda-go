@@ -102,7 +102,11 @@ import(
 	"{{ $pkg | path }}"{{- end}}
 )
 
-/** Put these into resolvers.go  or similar **/
+type QueryResolverInterface interface {
+{{- range $queryResolver := .QueryResolvers}}
+	Query_{{$queryResolver.Name}}(ctx context.Context{{ if ne (len $queryResolver.Arguments) 0}}, {{ $queryResolver.Arguments | argsW }}{{ end }}, authHeader api.AuthHeader) ({{ ref $queryResolver.Return.GoType $queryResolver.Return.IsArray }}, *api.LambdaError){{ end }}
+}
+
 type QueryResolver struct {
 	*Resolver
 }

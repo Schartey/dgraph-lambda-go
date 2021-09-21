@@ -56,6 +56,7 @@ func generateExecuter(c *config.Config, r *rewriter.Rewriter) error {
 	pkgs["context"] = types.NewPackage("context", "context")
 	pkgs["errors"] = types.NewPackage("errors", "errors")
 	pkgs["http"] = types.NewPackage("net/http", "http")
+	pkgs["strings"] = types.NewPackage("strings", "strings")
 	pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 
 	if len(c.ParsedTree.ResolverTree.FieldResolvers) > 0 ||
@@ -107,6 +108,7 @@ import(
 )
 
 type Executer struct {
+	api.ExecuterInterface
 	fieldResolver    	{{.ResolverPackageName}}.FieldResolver
 	queryResolver    	{{.ResolverPackageName}}.QueryResolver
 	mutationResolver 	{{.ResolverPackageName}}.MutationResolver
@@ -118,13 +120,39 @@ func NewExecuter(resolver *{{.ResolverPackageName}}.Resolver) api.ExecuterInterf
 	return Executer{fieldResolver: {{.ResolverPackageName}}.FieldResolver{Resolver: resolver}, queryResolver: {{.ResolverPackageName}}.QueryResolver{Resolver: resolver}, mutationResolver: {{.ResolverPackageName}}.MutationResolver{Resolver: resolver}, middlewareResolver: {{.ResolverPackageName}}.MiddlewareResolver{Resolver: resolver}, webhookResolver: {{.ResolverPackageName}}.WebhookResolver{Resolver: resolver}}
 }
 
-func (e *Executer) Middleware(md *api.MiddlewareData) (err *api.LambdaError) {
-	switch md.Dbody.Resolver {
+func (e Executer) Resolve(ctx context.Context, request *api.Request) (response []byte, err *api.LambdaError) {
+	if request.Event.Operation != "" {
+		return nil, e.resolveWebhook(ctx, request)
+	} else {
+		parentsBytes, underlyingError := request.Parents.MarshalJSON()
+		if underlyingError != nil {
+			return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+		}
+
+		mc := &api.MiddlewareContext{Ctx: ctx, Request: request}
+		if err = e.middleware(mc); err != nil {
+			return nil, err
+		}
+		ctx = mc.Ctx
+		request = mc.Request
+
+		if strings.HasPrefix(request.Resolver, "Query.") {
+			return e.resolveQuery(ctx, request)
+		} else if strings.HasPrefix(request.Resolver, "Mutation.") {
+			return e.resolveMutation(ctx, request)
+		} else {
+			return e.resolveField(ctx, request, parentsBytes)
+		}
+	}
+}
+
+func (e Executer) middleware(mc *api.MiddlewareContext) (err *api.LambdaError) {
+	switch mc.Request.Resolver {
 		{{- range $fieldResolver := .FieldResolvers}}{{ if ne (len $fieldResolver.Middleware) 0 }}
 		case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
 			{
 				{{- range $middleware := $fieldResolver.Middleware}}
-				if err = e.middlewareResolver.Middleware_{{$middleware}}(md); err != nil {
+				if err = e.middlewareResolver.Middleware_{{$middleware}}(mc); err != nil {
 					return err
 				}
 				{{- end}}
@@ -136,7 +164,7 @@ func (e *Executer) Middleware(md *api.MiddlewareData) (err *api.LambdaError) {
 		case "Query.{{$query.Name}}":
 			{
 				{{- range $middleware := $query.Middleware}}
-				if err = e.middlewareResolver.Middleware_{{$middleware}}(md); err != nil {
+				if err = e.middlewareResolver.Middleware_{{$middleware}}(mc); err != nil {
 					return err
 				}
 				{{- end}}
@@ -147,7 +175,7 @@ func (e *Executer) Middleware(md *api.MiddlewareData) (err *api.LambdaError) {
 		case "Mutation.{{$mutation.Name}}":
 			{
 				{{- range $middleware := $mutation.Middleware}}
-				if err = e.middlewareResolver.Middleware_{{$middleware}}(md); err != nil {
+				if err = e.middlewareResolver.Middleware_{{$middleware}}(mc); err != nil {
 					return err
 				}
 				{{- end}}
@@ -158,100 +186,105 @@ func (e *Executer) Middleware(md *api.MiddlewareData) (err *api.LambdaError) {
 	return nil
 }
 
-func (e Executer) Resolve(ctx context.Context, dbody api.DBody) (response []byte, err *api.LambdaError) {
-	if dbody.Event.Operation != "" {
-		switch dbody.Event.TypeName {
-			{{- range $model := .Models}} {{ if ne (len $model.LambdaOnMutate) 0 }}
-			case "{{ $model.TypeName | typeName }}":
-				err = e.webhookResolver.Webhook_{{ $model.TypeName | typeName }}(ctx, dbody.Event)
-				return nil, err
-			{{ end }} {{ end }}
-		}
-	} else {
-		{{ if ne (len .FieldResolvers) 0}}parentsBytes, underlyingError := dbody.Parents.MarshalJSON()
-		if underlyingError != nil {
-			return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}	
-		}
-		{{ end }}
+func (e Executer) resolveField(ctx context.Context, request *api.Request, parentsBytes []byte) (response []byte, err *api.LambdaError) {
+	switch request.Resolver {
+		{{- range $fieldResolver := .FieldResolvers}}
+		case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
+			{
+				var parents []{{ pointer $fieldResolver.Parent.GoType false }}
+				json.Unmarshal(parentsBytes, &parents)
 
-		md := &api.MiddlewareData{Ctx: ctx, Dbody: dbody}
-		if err = e.Middleware(md); err != nil {
+				result, err := e.fieldResolver.{{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(ctx, parents, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
+
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
+			}
+		{{- end }}
+	}
+
+	return nil, &api.LambdaError{Underlying: errors.New("could not find query resolver"), Status: http.StatusNotFound}
+}
+
+func (e Executer) resolveQuery(ctx context.Context, request *api.Request) (response []byte, err *api.LambdaError) {
+	switch request.Resolver {
+	{{- range $query := .Queries}}
+         case "Query.{{$query.Name}}":
+	{
+		{{- range $arg := $query.Arguments }}
+		var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
+		json.Unmarshal(request.Args["{{$arg.Name}}"], &{{$arg.Name}})
+		{{- end }}	
+		result, err := e.queryResolver.Query_{{$query.Name}}(ctx{{ if ne (len $query.Arguments) 0}}, {{$query.Arguments | args}}{{end}}, request.AuthHeader)
+		if err != nil {
 			return nil, err
 		}
-		ctx = md.Ctx
-		dbody = md.Dbody
 
-		response := []byte{}
-
-		switch dbody.Resolver {
-			{{- range $fieldResolver := .FieldResolvers}}
-			case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
-				{
-					var parents []{{ pointer $fieldResolver.Parent.GoType false }}
-					json.Unmarshal(parentsBytes, &parents)
-
-					// Dependent on generation loop or just direct
-					/*var {{$fieldResolver.Field.Name}}s []{{$fieldResolver.Field.GoType | ref}}
-					for _, parent := range parents {
-						{{$fieldResolver.Field.Name}}s = fullnames.append(e.fieldResolver.{{$fieldResolver.Field.GoType | ref }}_{{$fieldResolver.Field.Name}}(ctx, parent))
-					}*/
-					result, err := e.fieldResolver.{{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(ctx, parents, dbody.AuthHeader)
-					if err != nil {
-						return nil, err
-					}
-
-					var underlyingError error
-					response, underlyingError = json.Marshal(result)
-					if underlyingError != nil {
-						return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-					}
-					break
-				}
-			{{- end }}
-
-			{{- range $query := .Queries}}
-			case "Query.{{$query.Name}}":
-				{
-					{{- range $arg := $query.Arguments }}
-					var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
-					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
-					{{- end }}	
-					result, err := e.queryResolver.Query_{{$query.Name}}(ctx{{ if ne (len $query.Arguments) 0}}, {{$query.Arguments | args}}{{end}}, dbody.AuthHeader)
-					if err != nil {
-						return nil, err
-					}
-
-					var underlyingError error
-					response, underlyingError = json.Marshal(result)
-					if underlyingError != nil {
-						return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-					}
-					break
-				}
-			{{- end }}
-			{{- range $mutation := .Mutations}}
-			case "Mutation.{{$mutation.Name}}":
-				{
-					{{- range $arg := $mutation.Arguments }}
-					var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
-					json.Unmarshal(dbody.Args["{{$arg.Name}}"], &{{$arg.Name}})
-					{{- end }}	
-					result, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx{{ if ne (len $mutation.Arguments) 0}}, {{$mutation.Arguments | args}}{{ end }}, dbody.AuthHeader)
-					if err != nil {
-						return nil, err
-					}
-
-					var underlyingError error
-					response, underlyingError = json.Marshal(result)
-					if underlyingError != nil {
-						return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-					}
-					break
-				}
-			{{- end }}
+		var underlyingError error
+		response, underlyingError = json.Marshal(result)
+		if underlyingError != nil {
+			return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+		} else {
+			return response, nil
 		}
-		return response, nil
+		break
 	}
-	return nil, &api.LambdaError{Underlying: errors.New("No resolver found"), Status: http.StatusNotFound}
+{{- end }}
+    }
+
+	return nil, &api.LambdaError{Underlying: errors.New("could not find query resolver"), Status: http.StatusNotFound}
 }
+
+func (e Executer) resolveMutation(ctx context.Context, request *api.Request) (response []byte, err *api.LambdaError) {
+	switch request.Resolver {
+		{{- range $mutation := .Mutations}}
+		case "Mutation.{{$mutation.Name}}":
+			{
+				{{- range $arg := $mutation.Arguments }}
+				var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
+				json.Unmarshal(request.Args["{{$arg.Name}}"], &{{$arg.Name}})
+				{{- end }}	
+				result, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx{{ if ne (len $mutation.Arguments) 0}}, {{$mutation.Arguments | args}}{{ end }}, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
+
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
+			}
+		{{- end }}
+    }
+
+	return nil, &api.LambdaError{Underlying: errors.New("could not find query resolver"), Status: http.StatusNotFound}
+}
+
+func (e Executer) resolveWebhook(ctx context.Context, request *api.Request) (err *api.LambdaError) {
+	switch request.Event.TypeName {
+	case "Hotel":
+		err = e.webhookResolver.Webhook_Hotel(ctx, request.Event)
+		return err
+
+	case "User":
+		err = e.webhookResolver.Webhook_User(ctx, request.Event)
+		return err
+
+	}
+	
+	return &api.LambdaError{Underlying: errors.New("could not find webhook resolver"), Status: http.StatusNotFound}
+}
+
 `))

@@ -81,7 +81,11 @@ import(
 	"{{ $pkg | path }}"{{- end}}
 )
 
-/** Put these into resolvers.go  or similar **/
+type FieldResolverInterface interface {
+{{- range $fieldResolver := .FieldResolvers}}
+	{{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(ctx context.Context, parents []{{ pointer $fieldResolver.Parent.GoType false }}, authHeader api.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, *api.LambdaError){{ end }}
+}
+
 type FieldResolver struct {
 	*Resolver
 }
