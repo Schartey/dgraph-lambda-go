@@ -1,0 +1,12 @@
+#!/bin/bash
+
+set -euo pipefail
+
+cd integration
+
+go get -d github.com/schartey/dgraph-lambda-go
+
+if { go run github.com/schartey/dgraph-lambda-go init 2>&1 >&3 3>&- | grep '^' >&2; } 3>&1; then
+    echo "dgraph-lambda init failed validation"
+    exit 125
+fi
