@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/pkg/errors"
 
@@ -72,8 +74,7 @@ func (l *Lambda) validate(request *Request) error {
 	return nil
 }
 
-func (l *Lambda) Serve() error {
-	/* Setup Router */
+func (l *Lambda) Serve(wg *sync.WaitGroup) (*http.Server, error) {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Post("/graphql-worker", func(w http.ResponseWriter, r *http.Request) {
@@ -85,8 +86,19 @@ func (l *Lambda) Serve() error {
 		}
 		w.Write(res)
 	})
-	fmt.Println("Lambda listening on 8686")
-	fmt.Println(http.ListenAndServe(":8686", r))
+	srv := &http.Server{
+		Addr:    ":8686",
+		Handler: r,
+	}
 
-	return nil
+	go func() {
+		defer wg.Done()
+
+		fmt.Println("Lambda listening on 8686")
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("ListenAndServe(): %v", err)
+		}
+	}()
+
+	return srv, nil
 }
