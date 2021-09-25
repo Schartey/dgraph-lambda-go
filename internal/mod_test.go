@@ -32,3 +32,10 @@ func Test_findGoModFile_Success(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Contains(t, path, "dgraph-lambda-go")
 }
+
+func Test_GetModuleName(t *testing.T) {
+	moduleName, err := GetModuleName()
+	assert.NoError(t, err)
+
+	assert.Equal(t, "github.com/schartey/dgraph-lambda-go", moduleName)
+}
