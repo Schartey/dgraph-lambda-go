@@ -14,9 +14,7 @@ var mode = packages.NeedName |
 	packages.NeedTypesInfo
 
 type Packages struct {
-	packages     map[string]*packages.Package
-	importToName map[string]string
-	loadErrors   []error
+	packages map[string]*packages.Package
 }
 
 func (p *Packages) Load(importPath string) (*packages.Package, error) {
@@ -29,6 +27,9 @@ func (p *Packages) Load(importPath string) (*packages.Package, error) {
 	}
 
 	for _, pkg := range pkgs {
+		if len(pkg.Errors) != 0 {
+			return nil, pkg.Errors[0]
+		}
 		p.packages[importPath] = pkg
 	}
 
