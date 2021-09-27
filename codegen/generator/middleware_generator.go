@@ -8,10 +8,11 @@ import (
 	"text/template"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
 
-func generateMiddleware(c *config.Config, r *rewriter.Rewriter) error {
+func generateMiddleware(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
 	if c.ResolverFilename == "resolver" {
 
 		fileName := path.Join(c.Resolver.Dir, "middleware.resolver.go")
@@ -23,7 +24,7 @@ func generateMiddleware(c *config.Config, r *rewriter.Rewriter) error {
 
 		pkgs := make(map[string]*types.Package)
 
-		if len(c.ParsedTree.Middleware) > 0 {
+		if len(parsedTree.Middleware) > 0 {
 			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 		}
 
@@ -33,7 +34,7 @@ func generateMiddleware(c *config.Config, r *rewriter.Rewriter) error {
 			Packages    map[string]*types.Package
 			PackageName string
 		}{
-			Middleware:  c.ParsedTree.Middleware,
+			Middleware:  parsedTree.Middleware,
 			Rewriter:    r,
 			Packages:    pkgs,
 			PackageName: c.Resolver.Package,

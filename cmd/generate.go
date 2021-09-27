@@ -3,6 +3,7 @@ package cmd
 import (
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/codegen/generator"
+	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 	"github.com/schartey/dgraph-lambda-go/internal"
 	"github.com/urfave/cli/v2"
@@ -36,13 +37,23 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
-		rewriter := rewriter.New(config)
+		parser := parser.NewParser(config.Schema, config.Packages)
+		parsedTree, err := parser.Parse()
+		if err != nil {
+			return err
+		}
+
+		if err := config.Bind(parsedTree); err != nil {
+			return err
+		}
+
+		rewriter := rewriter.New(config, parsedTree)
 
 		if err := rewriter.Load(); err != nil {
 			return err
 		}
 
-		if err := generator.Generate(config, rewriter); err != nil {
+		if err := generator.Generate(config, parsedTree, rewriter); err != nil {
 			return err
 		}
 

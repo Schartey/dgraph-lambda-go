@@ -12,7 +12,7 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
 
-func generateFieldResolvers(c *config.Config, r *rewriter.Rewriter) error {
+func generateFieldResolvers(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
 
 	if c.ResolverFilename == "resolver" {
 
@@ -25,7 +25,7 @@ func generateFieldResolvers(c *config.Config, r *rewriter.Rewriter) error {
 
 		var pkgs = make(map[string]*types.Package)
 
-		for _, m := range c.ParsedTree.ResolverTree.FieldResolvers {
+		for _, m := range parsedTree.ResolverTree.FieldResolvers {
 			if m.Field.TypeName.Exported() {
 				pkgs[m.Field.TypeName.Pkg().Name()] = m.Field.TypeName.Pkg()
 			}
@@ -33,7 +33,7 @@ func generateFieldResolvers(c *config.Config, r *rewriter.Rewriter) error {
 				pkgs[m.Parent.TypeName.Pkg().Name()] = m.Parent.TypeName.Pkg()
 			}
 		}
-		if len(c.ParsedTree.ResolverTree.FieldResolvers) > 0 {
+		if len(parsedTree.ResolverTree.FieldResolvers) > 0 {
 			pkgs["context"] = types.NewPackage("context", "context")
 			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 		}
@@ -44,7 +44,7 @@ func generateFieldResolvers(c *config.Config, r *rewriter.Rewriter) error {
 			Packages       map[string]*types.Package
 			PackageName    string
 		}{
-			FieldResolvers: c.ParsedTree.ResolverTree.FieldResolvers,
+			FieldResolvers: parsedTree.ResolverTree.FieldResolvers,
 			Rewriter:       r,
 			Packages:       pkgs,
 			PackageName:    c.Resolver.Package,

@@ -8,9 +8,14 @@ import (
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
+	"golang.org/x/tools/go/packages"
 )
 
-func generateModel(c *config.Config) error {
+var defaultPackage *packages.Package
+
+func generateModel(c *config.Config, parsedTree *parser.Tree) error {
+
+	defaultPackage = c.DefaultModelPackage
 
 	f, err := os.Create(c.Model.Filename)
 	if err != nil {
@@ -24,7 +29,7 @@ func generateModel(c *config.Config) error {
 	var interfaces = make(map[string]*parser.Interface)
 	var scalars = make(map[string]*parser.Scalar)
 
-	for _, m := range c.ParsedTree.ModelTree.Models {
+	for _, m := range parsedTree.ModelTree.Models {
 		if m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
 			models[m.Name] = m
 		}
@@ -34,17 +39,17 @@ func generateModel(c *config.Config) error {
 			}
 		}
 	}
-	for _, m := range c.ParsedTree.ModelTree.Enums {
+	for _, m := range parsedTree.ModelTree.Enums {
 		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
 			enums[m.Name] = m
 		}
 	}
-	for _, m := range c.ParsedTree.ModelTree.Interfaces {
+	for _, m := range parsedTree.ModelTree.Interfaces {
 		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
 			interfaces[m.Name] = m
 		}
 	}
-	for _, m := range c.ParsedTree.ModelTree.Scalars {
+	for _, m := range parsedTree.ModelTree.Scalars {
 		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
 			scalars[m.Name] = m
 		}
@@ -65,7 +70,7 @@ func generateModel(c *config.Config) error {
 	}{
 		Interfaces:  interfaces,
 		Enums:       enums,
-		Scalars:     c.ParsedTree.ModelTree.Scalars,
+		Scalars:     parsedTree.ModelTree.Scalars,
 		Models:      models,
 		Packages:    pkgs,
 		PackageName: c.Model.Package,

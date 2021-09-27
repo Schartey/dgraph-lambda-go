@@ -6,6 +6,7 @@ import (
 
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/internal"
+	"github.com/stretchr/testify/assert"
 )
 
 var autobindValues = []string{"github.com/schartey/dgraph-lambda-go/examples/models"}
@@ -18,8 +19,54 @@ var mutationResolvers = []string{"newAuthor"}
 
 var middlewareResolvers = []string{"user", "admin"}
 
+func Test_LoadConfig(t *testing.T) {
+	config, err := LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	assert.NoError(t, err)
+	assert.Contains(t, config.SchemaFilename[0], "dgraph-lambda-go/examples/test.graphql")
+	assert.Equal(t, "examples/lambda/generated/generated.go", config.Exec.Filename)
+	assert.Equal(t, "generated", config.Exec.Package)
+	assert.Equal(t, "examples/lambda/model/models_gen.go", config.Model.Filename)
+	assert.Equal(t, "model", config.Model.Package)
+	assert.Equal(t, "github.com/schartey/dgraph-lambda-go/examples/models", config.AutoBind[0])
+	assert.Equal(t, "follow-schema", config.Resolver.Layout)
+	assert.Equal(t, "examples/lambda/resolvers", config.Resolver.Dir)
+	assert.Equal(t, "resolvers", config.Resolver.Package)
+	assert.Equal(t, "{resolver}.resolver.go", config.Resolver.FilenameTemplate)
+	assert.Equal(t, true, config.Server.Standalone)
+	assert.Equal(t, "github.com/schartey/dgraph-lambda-go", config.Root)
+	assert.NotNil(t, config.DefaultModelPackage)
+	assert.Equal(t, "model", config.DefaultModelPackage.Name)
+	assert.Equal(t, "github.com/schartey/dgraph-lambda-go/examples/lambda/model", config.DefaultModelPackage.PkgPath)
+	assert.Equal(t, 3, len(config.Sources))
+	assert.Contains(t, config.Sources[2].Name, "dgraph-lambda-go/examples/test.graphql")
+}
+
+func Test_LoadConfig_Fail(t *testing.T) {
+	// Non existent file
+	_, err := LoadConfig("github.com/schartey/dgraph-lambda-go", "./lambda.yaml")
+	assert.Error(t, err)
+
+	// Invalid file type
+	_, err = LoadConfig("github.com/schartey/dgraph-lambda-go", "./config.go")
+	assert.Error(t, err)
+
+	for i := 1; i < 6; i++ {
+		// Invalid file type
+		_, err = LoadConfig("github.com/schartey/dgraph-lambda-go", fmt.Sprintf("../../test_resources/faulty%d.yaml", i))
+		assert.Error(t, err)
+	}
+}
+
+func Test_loadSchema(t *testing.T) {
+	config, err := LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	assert.NoError(t, err)
+
+	err = config.loadSchema()
+	assert.NoError(t, err)
+	assert.NotNil(t, config.Schema)
+}
+
 func Test_Config(t *testing.T) {
-	fmt.Println("test")
 	moduleName, err := internal.GetModuleName()
 	if err != nil {
 		t.FailNow()
@@ -44,40 +91,40 @@ func Test_Config(t *testing.T) {
 		t.FailNow()
 	}
 
-	for _, m := range models {
-		if !containsModel(m, config.ParsedTree.ModelTree.Models) {
-			fmt.Println("Missing model after parsing: " + m)
-			t.FailNow()
+	/*	for _, m := range models {
+			if !containsModel(m, config.ParsedTree.ModelTree.Models) {
+				fmt.Println("Missing model after parsing: " + m)
+				t.FailNow()
+			}
 		}
-	}
 
-	for _, f := range fieldResolvers {
-		if !containsFieldResolver(f, config.ParsedTree.ResolverTree.FieldResolvers) {
-			fmt.Println("Missing field-resolver after parsing: " + f)
-			t.FailNow()
+		for _, f := range fieldResolvers {
+			if !containsFieldResolver(f, config.ParsedTree.ResolverTree.FieldResolvers) {
+				fmt.Println("Missing field-resolver after parsing: " + f)
+				t.FailNow()
+			}
 		}
-	}
 
-	for _, q := range queryResolvers {
-		if !containsQueryResolver(q, config.ParsedTree.ResolverTree.Queries) {
-			fmt.Println("Missing query-resolver after parsing: " + q)
-			t.FailNow()
+		for _, q := range queryResolvers {
+			if !containsQueryResolver(q, config.ParsedTree.ResolverTree.Queries) {
+				fmt.Println("Missing query-resolver after parsing: " + q)
+				t.FailNow()
+			}
 		}
-	}
 
-	for _, m := range mutationResolvers {
-		if !containsMutationResolver(m, config.ParsedTree.ResolverTree.Mutations) {
-			fmt.Println("Missing mutation-resolver after parsing: " + m)
-			t.FailNow()
+		for _, m := range mutationResolvers {
+			if !containsMutationResolver(m, config.ParsedTree.ResolverTree.Mutations) {
+				fmt.Println("Missing mutation-resolver after parsing: " + m)
+				t.FailNow()
+			}
 		}
-	}
 
-	for _, m := range middlewareResolvers {
-		if !containsMiddlewareResolver(m, config.ParsedTree.Middleware) {
-			fmt.Println("Missing middleware resolver: " + m)
-			t.FailNow()
-		}
-	}
+		for _, m := range middlewareResolvers {
+			if !containsMiddlewareResolver(m, config.ParsedTree.Middleware) {
+				fmt.Println("Missing middleware resolver: " + m)
+				t.FailNow()
+			}
+		}*/
 }
 
 func contains(s string, arr []string) bool {

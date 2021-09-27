@@ -9,22 +9,24 @@ import (
 	"strings"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/internal"
 	"golang.org/x/tools/go/packages"
 )
 
 type Rewriter struct {
 	config           *config.Config
+	parsedTree       *parser.Tree
 	files            map[string]string
 	RewriteBodies    map[string]string
 	DeprecatedBodies map[string]string
 }
 
-func New(config *config.Config) *Rewriter {
+func New(config *config.Config, parsedTree *parser.Tree) *Rewriter {
 	files := make(map[string]string)
 	rewriteBodies := make(map[string]string)
 	deprecatedBodies := make(map[string]string)
-	return &Rewriter{config: config, files: files, RewriteBodies: rewriteBodies, DeprecatedBodies: deprecatedBodies}
+	return &Rewriter{config: config, parsedTree: parsedTree, files: files, RewriteBodies: rewriteBodies, DeprecatedBodies: deprecatedBodies}
 }
 
 func (r *Rewriter) Load() error {
@@ -50,7 +52,7 @@ func (r *Rewriter) Load() error {
 				if strings.HasPrefix(d.Name.Name, "Query_") {
 					queryName := strings.TrimPrefix(d.Name.Name, "Query_")
 
-					for _, query := range r.config.ParsedTree.ResolverTree.Queries {
+					for _, query := range r.parsedTree.ResolverTree.Queries {
 						if query.Name == queryName {
 							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
@@ -62,7 +64,7 @@ func (r *Rewriter) Load() error {
 				if strings.HasPrefix(d.Name.Name, "Mutation_") {
 					mutationName := strings.TrimPrefix(d.Name.Name, "Mutation_")
 
-					for _, mutation := range r.config.ParsedTree.ResolverTree.Mutations {
+					for _, mutation := range r.parsedTree.ResolverTree.Mutations {
 						if mutation.Name == mutationName {
 							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
@@ -74,7 +76,7 @@ func (r *Rewriter) Load() error {
 				if strings.HasPrefix(d.Name.Name, "Middleware_") {
 					middlewareName := strings.TrimPrefix(d.Name.Name, "Middleware_")
 
-					for _, middleware := range r.config.ParsedTree.Middleware {
+					for _, middleware := range r.parsedTree.Middleware {
 						if middleware == middlewareName {
 							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
@@ -86,7 +88,7 @@ func (r *Rewriter) Load() error {
 				if strings.HasPrefix(d.Name.Name, "Webhook_") {
 					webhookName := strings.TrimPrefix(d.Name.Name, "Webhook_")
 
-					for _, model := range r.config.ParsedTree.ModelTree.Models {
+					for _, model := range r.parsedTree.ModelTree.Models {
 						if model.TypeName.Name() == webhookName {
 							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
@@ -95,7 +97,7 @@ func (r *Rewriter) Load() error {
 					}
 				}
 
-				for _, fieldResolver := range r.config.ParsedTree.ResolverTree.FieldResolvers {
+				for _, fieldResolver := range r.parsedTree.ResolverTree.FieldResolvers {
 					splitName := strings.Split(d.Name.Name, "_")
 
 					if splitName[0] == fieldResolver.Parent.Name && splitName[1] == fieldResolver.Field.Name {

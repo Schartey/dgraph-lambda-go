@@ -26,17 +26,17 @@ type PackageConfig struct {
 }
 
 type ResolverConfig struct {
-	Layout           string `yaml:"layout,omitempty"`
-	Dir              string `yaml:"dir,omitempty"`
-	Package          string `yaml:"package,omitempty"`
-	FilenameTemplate string `yaml:"filename_template,omitempty"`
+	Layout           string `yaml:"layout"`
+	Dir              string `yaml:"dir"`
+	Package          string `yaml:"package"`
+	FilenameTemplate string `yaml:"filename_template"`
 }
 
 type Config struct {
-	SchemaFilename []string       `yaml:"schema,omitempty"`
+	SchemaFilename []string       `yaml:"schema"`
 	Exec           PackageConfig  `yaml:"exec"`
-	Model          PackageConfig  `yaml:"model,omitempty"`
-	Resolver       ResolverConfig `yaml:"resolver,omitempty"`
+	Model          PackageConfig  `yaml:"model"`
+	Resolver       ResolverConfig `yaml:"resolver"`
 	AutoBind       []string       `yaml:"autobind"`
 	Server         struct {
 		Standalone bool `yaml:"standalone"`
@@ -47,11 +47,9 @@ type Config struct {
 	Schema              *ast.Schema        `yaml:"-"`
 	Root                string             `yaml:"-"`
 	DefaultModelPackage *packages.Package  `yaml:"-"`
-	ParsedTree          *parser.Tree       `yaml:"-"`
 	ResolverFilename    string             `yaml:"-"`
 }
 
-// LoadConfig reads the lambda.yaml config file
 func LoadConfig(moduleName string, filename string) (*Config, error) {
 	config := &Config{}
 
@@ -68,6 +66,18 @@ func LoadConfig(moduleName string, filename string) (*Config, error) {
 
 	if err := yaml.UnmarshalStrict(b, config); err != nil {
 		return nil, errors.Wrap(err, "unable to parse config")
+	}
+
+	if config.Exec.Package == "" || config.Model.Package == "" || config.Resolver.Package == "" {
+		return nil, errors.New("package name must be set in lambda config")
+	}
+
+	if config.Exec.Filename == "" || config.Model.Filename == "" {
+		return nil, errors.New("file names for generated executer and model must be set in lambda config")
+	}
+
+	if config.Resolver.Dir == "" {
+		return nil, errors.New("resovler target direcotry must be set in lambda config")
 	}
 
 	preGlobbing := config.SchemaFilename
@@ -145,20 +155,6 @@ func (c *Config) LoadSchema() error {
 			return errors.Wrap(err, "Could not load schema")
 		}
 	}
-	parser := parser.NewParser(c.Schema, c.Packages, c.DefaultModelPackage)
-
-	parsedTree, err := parser.Parse()
-	if err != nil {
-		return errors.Wrap(err, "Could not parse schema")
-	}
-
-	c.ParsedTree = parsedTree
-
-	err = c.autobind()
-	if err != nil {
-		return errors.Wrap(err, "Error while binding models")
-	}
-
 	return nil
 }
 
@@ -180,10 +176,10 @@ func (c *Config) loadSchema() error {
 	return nil
 }
 
-func (c *Config) autobind() error {
+func (c *Config) Bind(parsedTree *parser.Tree) error {
 
 	if len(c.AutoBind) == 0 {
-		for _, model := range c.ParsedTree.ModelTree.Models {
+		for _, model := range parsedTree.ModelTree.Models {
 			if model.GoType.TypeName.Exported() {
 				if model.GoType.TypeName.Pkg() == nil {
 					model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), model.Name, nil)
@@ -191,7 +187,7 @@ func (c *Config) autobind() error {
 			}
 		}
 
-		for _, it := range c.ParsedTree.ModelTree.Interfaces {
+		for _, it := range parsedTree.ModelTree.Interfaces {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
 					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
@@ -199,7 +195,7 @@ func (c *Config) autobind() error {
 			}
 		}
 
-		for _, it := range c.ParsedTree.ModelTree.Enums {
+		for _, it := range parsedTree.ModelTree.Enums {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
 					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
@@ -207,7 +203,7 @@ func (c *Config) autobind() error {
 			}
 		}
 
-		for _, it := range c.ParsedTree.ModelTree.Scalars {
+		for _, it := range parsedTree.ModelTree.Scalars {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
 					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
@@ -226,7 +222,7 @@ func (c *Config) autobind() error {
 			}
 		}
 
-		for _, model := range c.ParsedTree.ModelTree.Models {
+		for _, model := range parsedTree.ModelTree.Models {
 			if model.GoType.TypeName.Exported() {
 				if model.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, model.Name) {
@@ -239,7 +235,7 @@ func (c *Config) autobind() error {
 			}
 		}
 
-		for _, it := range c.ParsedTree.ModelTree.Interfaces {
+		for _, it := range parsedTree.ModelTree.Interfaces {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, it.Name) {
@@ -252,7 +248,7 @@ func (c *Config) autobind() error {
 			}
 		}
 
-		for _, it := range c.ParsedTree.ModelTree.Enums {
+		for _, it := range parsedTree.ModelTree.Enums {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, it.Name) {
@@ -265,7 +261,7 @@ func (c *Config) autobind() error {
 			}
 		}
 
-		for _, it := range c.ParsedTree.ModelTree.Scalars {
+		for _, it := range parsedTree.ModelTree.Scalars {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, it.Name) {

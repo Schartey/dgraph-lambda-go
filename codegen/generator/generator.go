@@ -11,36 +11,29 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/graphql"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
-	"golang.org/x/tools/go/packages"
 )
 
-var autobind []string
-var defaultPackage *packages.Package
+func Generate(c *config.Config, p *parser.Tree, r *rewriter.Rewriter) error {
 
-func Generate(c *config.Config, r *rewriter.Rewriter) error {
-
-	autobind = c.AutoBind
-	defaultPackage = c.DefaultModelPackage
-
-	if err := generateModel(c); err != nil {
+	if err := generateModel(c, p); err != nil {
 		return errors.Wrap(err, "Could not generate model")
 	}
-	if err := generateFieldResolvers(c, r); err != nil {
+	if err := generateFieldResolvers(c, p, r); err != nil {
 		return errors.Wrap(err, "Could not generate field resolvers")
 	}
-	if err := generateQueryResolvers(c, r); err != nil {
+	if err := generateQueryResolvers(c, p, r); err != nil {
 		return errors.Wrap(err, "Could not generate query resolvers")
 	}
-	if err := generateMutationResolvers(c, r); err != nil {
+	if err := generateMutationResolvers(c, p, r); err != nil {
 		return errors.Wrap(err, "Could not generate mutation resolvers")
 	}
-	if err := generateMiddleware(c, r); err != nil {
+	if err := generateMiddleware(c, p, r); err != nil {
 		return errors.Wrap(err, "Could not generate middleware resolvers")
 	}
-	if err := generateWebhook(c, r); err != nil {
+	if err := generateWebhook(c, p, r); err != nil {
 		return errors.Wrap(err, "Could not generate webhook resolvers")
 	}
-	if err := generateExecuter(c, r); err != nil {
+	if err := generateExecuter(c, p, r); err != nil {
 		return errors.Wrap(err, "Could not generate executer")
 	}
 	return nil
@@ -48,11 +41,11 @@ func Generate(c *config.Config, r *rewriter.Rewriter) error {
 
 func resolverRef(t *parser.GoType) string {
 	if t.TypeName.Pkg() != nil {
-		for _, te := range autobind {
+		/*for _, te := range autobind {
 			if te == t.TypeName.Pkg().Path() {
 				return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
 			}
-		}
+		}*/
 		if t.TypeName.Exported() {
 			return fmt.Sprintf("%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
 		}

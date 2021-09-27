@@ -12,7 +12,7 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
 
-func generateWebhook(c *config.Config, r *rewriter.Rewriter) error {
+func generateWebhook(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
 	if c.ResolverFilename == "resolver" {
 
 		fileName := path.Join(c.Resolver.Dir, "webhook.resolver.go")
@@ -26,7 +26,7 @@ func generateWebhook(c *config.Config, r *rewriter.Rewriter) error {
 
 		var models = make(map[string]*parser.Model)
 
-		for _, m := range c.ParsedTree.ModelTree.Models {
+		for _, m := range parsedTree.ModelTree.Models {
 			if len(m.LambdaOnMutate) > 0 {
 				models[m.Name] = m
 				//pkgs[m.TypeName.Pkg().Name()] = m.TypeName.Pkg()

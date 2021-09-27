@@ -13,7 +13,7 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
 
-func generateMutationResolvers(c *config.Config, r *rewriter.Rewriter) error {
+func generateMutationResolvers(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
 	if c.ResolverFilename == "resolver" {
 
 		fileName := path.Join(c.Resolver.Dir, "mutation.resolver.go")
@@ -25,7 +25,7 @@ func generateMutationResolvers(c *config.Config, r *rewriter.Rewriter) error {
 
 		pkgs := make(map[string]*types.Package)
 
-		for _, m := range c.ParsedTree.ResolverTree.Mutations {
+		for _, m := range parsedTree.ResolverTree.Mutations {
 			if m.Return.TypeName.Exported() {
 				pkgs[m.Return.TypeName.Pkg().Name()] = m.Return.TypeName.Pkg()
 			}
@@ -36,7 +36,7 @@ func generateMutationResolvers(c *config.Config, r *rewriter.Rewriter) error {
 				}
 			}
 		}
-		if len(c.ParsedTree.ResolverTree.Mutations) > 0 {
+		if len(parsedTree.ResolverTree.Mutations) > 0 {
 			pkgs["context"] = types.NewPackage("context", "context")
 			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 		}
@@ -47,7 +47,7 @@ func generateMutationResolvers(c *config.Config, r *rewriter.Rewriter) error {
 			Packages          map[string]*types.Package
 			PackageName       string
 		}{
-			MutationResolvers: c.ParsedTree.ResolverTree.Mutations,
+			MutationResolvers: parsedTree.ResolverTree.Mutations,
 			Rewriter:          r,
 			Packages:          pkgs,
 			PackageName:       c.Resolver.Package,

@@ -13,7 +13,7 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
 
-func generateQueryResolvers(c *config.Config, r *rewriter.Rewriter) error {
+func generateQueryResolvers(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
 
 	if c.ResolverFilename == "resolver" {
 
@@ -26,7 +26,7 @@ func generateQueryResolvers(c *config.Config, r *rewriter.Rewriter) error {
 
 		pkgs := make(map[string]*types.Package)
 
-		for _, m := range c.ParsedTree.ResolverTree.Queries {
+		for _, m := range parsedTree.ResolverTree.Queries {
 			if m.Return.TypeName.Exported() {
 				pkgs[m.Return.TypeName.Pkg().Name()] = m.Return.TypeName.Pkg()
 			}
@@ -37,7 +37,7 @@ func generateQueryResolvers(c *config.Config, r *rewriter.Rewriter) error {
 				}
 			}
 		}
-		if len(c.ParsedTree.ResolverTree.Queries) > 0 {
+		if len(parsedTree.ResolverTree.Queries) > 0 {
 			pkgs["context"] = types.NewPackage("context", "context")
 			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
 		}
@@ -48,7 +48,7 @@ func generateQueryResolvers(c *config.Config, r *rewriter.Rewriter) error {
 			Packages       map[string]*types.Package
 			PackageName    string
 		}{
-			QueryResolvers: c.ParsedTree.ResolverTree.Queries,
+			QueryResolvers: parsedTree.ResolverTree.Queries,
 			Rewriter:       r,
 			Packages:       pkgs,
 			PackageName:    c.Resolver.Package,
@@ -63,15 +63,6 @@ func generateQueryResolvers(c *config.Config, r *rewriter.Rewriter) error {
 
 func returnRef(t *parser.GoType, isArray bool) string {
 	if t.TypeName.Pkg() != nil {
-		for _, te := range autobind {
-			if te == t.TypeName.Pkg().Path() {
-				if isArray {
-					return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
-				} else {
-					return fmt.Sprintf("*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
-				}
-			}
-		}
 		if t.TypeName.Exported() {
 			if isArray {
 				return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())

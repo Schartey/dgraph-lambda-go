@@ -10,7 +10,6 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/graphql"
 	"github.com/schartey/dgraph-lambda-go/internal"
 	"github.com/vektah/gqlparser/v2/ast"
-	"golang.org/x/tools/go/packages"
 )
 
 var middlewareRegex = regexp.MustCompile(`@middleware\(([^)]+)\)`)
@@ -126,13 +125,12 @@ type ResolverTree struct {
 }
 
 type Parser struct {
-	schema         *ast.Schema
-	tree           *Tree
-	packages       *internal.Packages
-	defaultPackage *packages.Package
+	schema   *ast.Schema
+	tree     *Tree
+	packages *internal.Packages
 }
 
-func NewParser(schema *ast.Schema, packages *internal.Packages, defaultPackage *packages.Package) *Parser {
+func NewParser(schema *ast.Schema, packages *internal.Packages) *Parser {
 	return &Parser{schema: schema, tree: &Tree{
 		ModelTree: &ModelTree{
 			Interfaces: make(map[string]*Interface),
@@ -147,8 +145,7 @@ func NewParser(schema *ast.Schema, packages *internal.Packages, defaultPackage *
 		},
 		Middleware: make(map[string]string),
 	},
-		packages:       packages,
-		defaultPackage: defaultPackage,
+		packages: packages,
 	}
 }
 
