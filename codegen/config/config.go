@@ -50,7 +50,7 @@ type Config struct {
 	ResolverFilename    string             `yaml:"-"`
 }
 
-func LoadConfigFile(modulename string, filename string) (*Config, error) {
+func LoadConfigFile(moduleName string, filename string) (*Config, error) {
 	config := &Config{}
 
 	b, err := ioutil.ReadFile(filename)
@@ -74,6 +74,8 @@ func LoadConfigFile(modulename string, filename string) (*Config, error) {
 		return nil, errors.New("resovler target direcotry must be set in lambda config")
 	}
 
+	config.Root = moduleName
+
 	resolverTemplateSub := resolverTemplateRegex.FindStringSubmatch(config.Resolver.FilenameTemplate)
 	if len(resolverTemplateSub) > 1 {
 		if resolverTemplateSub[1] != "resolver" {
@@ -88,7 +90,7 @@ func LoadConfigFile(modulename string, filename string) (*Config, error) {
 	return config, nil
 }
 
-func (config *Config) LoadConfig(moduleName string, filename string) error {
+func (config *Config) LoadConfig(filename string) error {
 	preGlobbing := config.SchemaFilename
 
 	abs, err := filepath.Abs(filename)
@@ -140,13 +142,12 @@ func (config *Config) LoadConfig(moduleName string, filename string) error {
 	if config.Packages == nil {
 		config.Packages = &internal.Packages{}
 
-		defaultModelPath := moduleName + "/" + path.Dir(config.Model.Filename)
+		defaultModelPath := config.Root + "/" + path.Dir(config.Model.Filename)
 
 		defaultPackage, err := config.Packages.Load(defaultModelPath)
 		if err != nil {
 			return errors.Wrap(err, "Could not load generated model package")
 		}
-		config.Root = moduleName
 		config.DefaultModelPackage = defaultPackage
 	}
 

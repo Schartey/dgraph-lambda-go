@@ -32,7 +32,7 @@ var generateCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
-		err = config.LoadConfig(moduleName, configFile)
+		err = config.LoadConfig(configFile)
 		if err != nil {
 			return err
 		}

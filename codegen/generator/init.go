@@ -132,9 +132,16 @@ server:
 var serverTemplate = template.Must(template.New("server").Parse(`package main
 
 import (
+	{{ if .Standalone }}
+	"context"
 	"fmt"
-
+	"os"
+	"os/signal"
+	"sync"
+	"time"
+	{{ end }}
 	{{ if not .Standalone }}
+	"fmt"
 	"net/http"
 	"github.com/go-chi/chi"
 	{{ end }}

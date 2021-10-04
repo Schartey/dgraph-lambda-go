@@ -24,7 +24,7 @@ var middlewareResolvers = []string{"user", "admin"}
 func Test_LoadConfig(t *testing.T) {
 	config, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
 	assert.NoError(t, err)
-	err = config.LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	err = config.LoadConfig("../../lambda.yaml")
 	assert.NoError(t, err)
 
 	assert.Contains(t, filepath.ToSlash(config.SchemaFilename[0]), path.Join("dgraph-lambda-go", "examples", "test.graphql"))
@@ -65,7 +65,7 @@ func Test_LoadConfig_Fail(t *testing.T) {
 func Test_loadSchema(t *testing.T) {
 	config, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
 	assert.NoError(t, err)
-	err = config.LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	err = config.LoadConfig("../../lambda.yaml")
 	assert.NoError(t, err)
 
 	err = config.loadSchema()
@@ -84,7 +84,7 @@ func Test_Config(t *testing.T) {
 		fmt.Println(err.Error())
 		t.FailNow()
 	}
-	err = config.LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	err = config.LoadConfig("../../lambda.yaml")
 	if err != nil {
 		t.FailNow()
 	}
