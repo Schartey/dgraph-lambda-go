@@ -10,9 +10,27 @@ type AuthHeader struct {
 	Value string `json:"value"`
 }
 
+type Directive struct {
+	Name      string                     `json:"name"`
+	Arguments map[string]json.RawMessage `json:"arguments"`
+}
+
+type SelectionField struct {
+	Alias        string                     `json:"alias"`
+	Name         string                     `json:"name"`
+	Arguments    map[string]json.RawMessage `json:"arguments"`
+	Directives   []Directive                `json:"directives"`
+	SelectionSet []SelectionField           `json:"slectionSet"`
+}
+
+type InfoField struct {
+	Field SelectionField `json:"field"`
+}
+
 type Request struct {
 	AccessToken string                     `json:"X-Dgraph-AccessToken"`
 	Args        map[string]json.RawMessage `json:"args"`
+	Field       InfoField                  `json:"info"`
 	AuthHeader  AuthHeader                 `json:"authHeader"`
 	Resolver    string                     `json:"resolver"`
 	Parents     json.RawMessage            `json:"parents"`
