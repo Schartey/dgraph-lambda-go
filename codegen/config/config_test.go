@@ -2,6 +2,8 @@ package config
 
 import (
 	"fmt"
+	"path"
+	"path/filepath"
 	"testing"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
@@ -22,7 +24,7 @@ var middlewareResolvers = []string{"user", "admin"}
 func Test_LoadConfig(t *testing.T) {
 	config, err := LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
 	assert.NoError(t, err)
-	assert.Contains(t, config.SchemaFilename[0], "dgraph-lambda-go/examples/test.graphql")
+	assert.Contains(t, filepath.ToSlash(config.SchemaFilename[0]), path.Join("dgraph-lambda-go", "examples", "test.graphql"))
 	assert.Equal(t, "examples/lambda/generated/generated.go", config.Exec.Filename)
 	assert.Equal(t, "generated", config.Exec.Package)
 	assert.Equal(t, "examples/lambda/model/models_gen.go", config.Model.Filename)
