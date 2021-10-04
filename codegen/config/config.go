@@ -50,14 +50,8 @@ type Config struct {
 	ResolverFilename    string             `yaml:"-"`
 }
 
-func LoadConfig(moduleName string, filename string) (*Config, error) {
+func LoadConfigFile(modulename string, filename string) (*Config, error) {
 	config := &Config{}
-
-	abs, err := filepath.Abs(filename)
-	if err != nil {
-		return nil, errors.Wrap(err, "unable to detect config folder")
-	}
-	abs = filepath.Dir(abs)
 
 	b, err := ioutil.ReadFile(filename)
 	if err != nil {
@@ -80,7 +74,28 @@ func LoadConfig(moduleName string, filename string) (*Config, error) {
 		return nil, errors.New("resovler target direcotry must be set in lambda config")
 	}
 
+	resolverTemplateSub := resolverTemplateRegex.FindStringSubmatch(config.Resolver.FilenameTemplate)
+	if len(resolverTemplateSub) > 1 {
+		if resolverTemplateSub[1] != "resolver" {
+			return nil, errors.New("Currently only {resolver}.resolver.go is supported as resolver filename template")
+		} else {
+			config.ResolverFilename = resolverTemplateSub[1]
+		}
+	} else {
+		return nil, errors.New("Could not find match name for filename template")
+	}
+
+	return config, nil
+}
+
+func (config *Config) LoadConfig(moduleName string, filename string) error {
 	preGlobbing := config.SchemaFilename
+
+	abs, err := filepath.Abs(filename)
+	if err != nil {
+		return errors.Wrap(err, "unable to detect config folder")
+	}
+	abs = filepath.Dir(abs)
 
 	var schemaFiles []string
 	for _, f := range preGlobbing {
@@ -90,7 +105,7 @@ func LoadConfig(moduleName string, filename string) (*Config, error) {
 
 		matches, err = filepath.Glob(fp)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to glob schema filename %s", f)
+			return errors.Wrapf(err, "failed to glob schema filename %s", f)
 		}
 
 		for _, m := range matches {
@@ -114,23 +129,12 @@ func LoadConfig(moduleName string, filename string) (*Config, error) {
 		var schemaRaw []byte
 		schemaRaw, err = ioutil.ReadFile(filename)
 		if err != nil {
-			return nil, errors.Wrap(err, "unable to open schema")
+			errors.Wrap(err, "unable to open schema")
 		}
 
 		config.Sources = append(config.Sources, &ast.Source{Input: graphql.SchemaInputs + graphql.DirectiveDefs})
 		config.Sources = append(config.Sources, &ast.Source{Input: graphql.ApolloSchemaQueries + graphql.ApolloSchemaExtras})
 		config.Sources = append(config.Sources, &ast.Source{Name: filename, Input: string(schemaRaw)})
-	}
-
-	resolverTemplateSub := resolverTemplateRegex.FindStringSubmatch(config.Resolver.FilenameTemplate)
-	if len(resolverTemplateSub) > 1 {
-		if resolverTemplateSub[1] != "resolver" {
-			return nil, errors.New("Currently only {resolver}.resolver.go is supported as resolver filename template")
-		} else {
-			config.ResolverFilename = resolverTemplateSub[1]
-		}
-	} else {
-		return nil, errors.New("Could not find match name for filename template")
 	}
 
 	if config.Packages == nil {
@@ -140,13 +144,13 @@ func LoadConfig(moduleName string, filename string) (*Config, error) {
 
 		defaultPackage, err := config.Packages.Load(defaultModelPath)
 		if err != nil {
-			return nil, errors.Wrap(err, "Could not load generated model package")
+			return errors.Wrap(err, "Could not load generated model package")
 		}
 		config.Root = moduleName
 		config.DefaultModelPackage = defaultPackage
 	}
 
-	return config, nil
+	return nil
 }
 
 func (c *Config) LoadSchema() error {

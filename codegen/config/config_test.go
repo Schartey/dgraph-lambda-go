@@ -22,8 +22,11 @@ var mutationResolvers = []string{"newAuthor"}
 var middlewareResolvers = []string{"user", "admin"}
 
 func Test_LoadConfig(t *testing.T) {
-	config, err := LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	config, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
 	assert.NoError(t, err)
+	err = config.LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	assert.NoError(t, err)
+
 	assert.Contains(t, filepath.ToSlash(config.SchemaFilename[0]), path.Join("dgraph-lambda-go", "examples", "test.graphql"))
 	assert.Equal(t, "examples/lambda/generated/generated.go", config.Exec.Filename)
 	assert.Equal(t, "generated", config.Exec.Package)
@@ -45,22 +48,24 @@ func Test_LoadConfig(t *testing.T) {
 
 func Test_LoadConfig_Fail(t *testing.T) {
 	// Non existent file
-	_, err := LoadConfig("github.com/schartey/dgraph-lambda-go", "./lambda.yaml")
+	_, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "./lambda.yaml")
 	assert.Error(t, err)
 
 	// Invalid file type
-	_, err = LoadConfig("github.com/schartey/dgraph-lambda-go", "./config.go")
+	_, err = LoadConfigFile("github.com/schartey/dgraph-lambda-go", "./config.go")
 	assert.Error(t, err)
 
 	for i := 1; i < 6; i++ {
 		// Invalid file type
-		_, err = LoadConfig("github.com/schartey/dgraph-lambda-go", fmt.Sprintf("../../test_resources/faulty%d.yaml", i))
+		_, err = LoadConfigFile("github.com/schartey/dgraph-lambda-go", fmt.Sprintf("../../test_resources/faulty%d.yaml", i))
 		assert.Error(t, err)
 	}
 }
 
 func Test_loadSchema(t *testing.T) {
-	config, err := LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	config, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	assert.NoError(t, err)
+	err = config.LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
 	assert.NoError(t, err)
 
 	err = config.loadSchema()
@@ -74,9 +79,13 @@ func Test_Config(t *testing.T) {
 		t.FailNow()
 	}
 
-	config, err := LoadConfig(moduleName, "../../lambda.yaml")
+	config, err := LoadConfigFile(moduleName, "../../lambda.yaml")
 	if err != nil {
 		fmt.Println(err.Error())
+		t.FailNow()
+	}
+	err = config.LoadConfig("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	if err != nil {
 		t.FailNow()
 	}
 

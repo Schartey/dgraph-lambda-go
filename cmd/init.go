@@ -30,10 +30,11 @@ var initCmd = &cli.Command{
 			return err
 		}
 
-		config, err := config.LoadConfig(moduleName, configFile)
+		config, err := config.LoadConfigFile(moduleName, configFile)
 		if err != nil {
 			return err
 		}
+
 		config.LoadSchema()
 		if err != nil {
 			return err

@@ -28,7 +28,11 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
-		config, err := config.LoadConfig(moduleName, configFile)
+		config, err := config.LoadConfigFile(moduleName, configFile)
+		if err != nil {
+			return err
+		}
+		err = config.LoadConfig(moduleName, configFile)
 		if err != nil {
 			return err
 		}
