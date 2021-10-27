@@ -279,16 +279,6 @@ func (e Executer) resolveMutation(ctx context.Context, request *api.Request) (re
 }
 
 func (e Executer) resolveWebhook(ctx context.Context, request *api.Request) (err *api.LambdaError) {
-	switch request.Event.TypeName {
-	case "Hotel":
-		err = e.webhookResolver.Webhook_Hotel(ctx, request.Event)
-		return err
-
-	case "User":
-		err = e.webhookResolver.Webhook_User(ctx, request.Event)
-		return err
-
-	}
 
 	return &api.LambdaError{Underlying: errors.New("could not find webhook resolver"), Status: http.StatusNotFound}
 }

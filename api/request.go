@@ -34,16 +34,16 @@ type Request struct {
 	AuthHeader  AuthHeader                 `json:"authHeader"`
 	Resolver    string                     `json:"resolver"`
 	Parents     json.RawMessage            `json:"parents"`
-	Event       Event                      `json:"event"`
+	Event       *Event                     `json:"event"`
 }
 
 type Event struct {
-	TypeName  string          `json:"__typename"`
-	CommitTs  uint64          `json:"commitTs"`
-	Operation string          `json:"operation"`
-	Add       AddEventInfo    `json:"add"`
-	Update    UpdateEventInfo `json:"update"`
-	Delete    DeleteEventInfo `json:"delete"`
+	TypeName  string           `json:"__typename"`
+	CommitTs  uint64           `json:"commitTs"`
+	Operation string           `json:"operation"`
+	Add       *AddEventInfo    `json:"add"`
+	Update    *UpdateEventInfo `json:"update"`
+	Delete    *DeleteEventInfo `json:"delete"`
 }
 
 type AddEventInfo struct {

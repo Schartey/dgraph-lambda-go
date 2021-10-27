@@ -61,11 +61,6 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
-		// Run go mod tidy
-		if err := internal.Tidy(); err != nil {
-			return err
-		}
-
 		return nil
 	},
 }

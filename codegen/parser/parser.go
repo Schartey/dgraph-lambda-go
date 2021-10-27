@@ -405,6 +405,9 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 }
 
 func (p *Parser) hasLambda(def *ast.Definition) bool {
+	if def.Directives.ForName("lambdaOnMutate") != nil {
+		return true
+	}
 	for _, field := range def.Fields {
 		if field.Directives.ForName("lambda") != nil {
 			return true

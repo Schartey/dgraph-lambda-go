@@ -19,6 +19,13 @@ func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rew
 	defer f.Close()
 
 	pkgs := make(map[string]*types.Package)
+	var lambdaOnMutate []string
+
+	for _, m := range parsedTree.ModelTree.Models {
+		if len(m.LambdaOnMutate) > 0 {
+			lambdaOnMutate = append(lambdaOnMutate, m.Name)
+		}
+	}
 
 	for _, m := range parsedTree.ResolverTree.FieldResolvers {
 		if m.Field.TypeName.Exported() {
@@ -73,6 +80,7 @@ func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rew
 		Mutations           map[string]*parser.Mutation
 		Middleware          map[string]string
 		Models              map[string]*parser.Model
+		LambdaOnMutate      []string
 		Packages            map[string]*types.Package
 		PackageName         string
 		ResolverPackageName string
@@ -82,6 +90,7 @@ func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rew
 		Mutations:           parsedTree.ResolverTree.Mutations,
 		Middleware:          parsedTree.Middleware,
 		Models:              parsedTree.ModelTree.Models,
+		LambdaOnMutate:      lambdaOnMutate,
 		Packages:            pkgs,
 		PackageName:         c.Exec.Package,
 		ResolverPackageName: c.Resolver.Package,
@@ -274,14 +283,11 @@ func (e Executer) resolveMutation(ctx context.Context, request *api.Request) (re
 
 func (e Executer) resolveWebhook(ctx context.Context, request *api.Request) (err *api.LambdaError) {
 	switch request.Event.TypeName {
-	case "Hotel":
-		err = e.webhookResolver.Webhook_Hotel(ctx, request.Event)
+		{{- range $name := .LambdaOnMutate}}
+	case "{{$name}}":
+		err = e.webhookResolver.Webhook_{{$name}}(ctx, request.Event)
 		return err
-
-	case "User":
-		err = e.webhookResolver.Webhook_User(ctx, request.Event)
-		return err
-
+		{{- end }}
 	}
 	
 	return &api.LambdaError{Underlying: errors.New("could not find webhook resolver"), Status: http.StatusNotFound}

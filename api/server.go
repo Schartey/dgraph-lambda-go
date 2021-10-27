@@ -57,19 +57,17 @@ func (l *Lambda) resolve(w http.ResponseWriter, r *http.Request) ([]byte, *Lambd
 }
 
 func (l *Lambda) validate(request *Request) error {
-	if request.Resolver == "" && request.Event.Operation == "" {
-		return errors.New("Resolver or Operation missing")
+	if request.Resolver == "" {
+		return errors.New("Resolver or Event missing")
 	}
-	if request.Resolver != "" {
-		if strings.HasPrefix(request.Resolver, "Query.") || strings.HasPrefix(request.Resolver, "Mutation.") {
-			if request.Args == nil {
-				return errors.New("Missing arguments for query/mutation")
-			}
-		} else {
-			if request.Parents == nil {
-				return errors.New("Missing parents for field resolver")
-			}
+	if strings.HasPrefix(request.Resolver, "Query.") || strings.HasPrefix(request.Resolver, "Mutation.") {
+		if request.Args == nil {
+			return errors.New("Missing arguments for query/mutation")
 		}
+	} else if request.Resolver == "$webhook" && request.Event == nil {
+		return errors.New("Webhook must have event")
+	} else if request.Resolver != "$webhook" && request.Parents == nil {
+		return errors.New("Missing parents for field resolver")
 	}
 	return nil
 }

@@ -33,6 +33,7 @@ var invalidRequests = []struct {
 	{body: "{", expected: http.StatusBadRequest},
 	{body: "{}", expected: http.StatusBadRequest},
 	{body: `{ "resolver":"" }`, expected: http.StatusBadRequest},
+	{body: `{ "resolver":"$webhook" }`, expected: http.StatusBadRequest},
 	{body: `{ "event": { "operation":""} }`, expected: http.StatusBadRequest},
 	{body: `{ "resolver":"", "event": { "operation":""} }`, expected: http.StatusBadRequest},
 	{body: `{ "resolver":"User.test" }`, expected: http.StatusBadRequest},
@@ -52,6 +53,7 @@ var validRequests = []struct {
 	{body: `{ "resolver":"User.test", "parents": "" }`, expected: http.StatusOK},
 	{body: `{ "resolver":"Query.test", "args": {} }`, expected: http.StatusOK},
 	{body: `{ "resolver":"Mutation.test", "args": {} }`, expected: http.StatusOK},
+	{body: `{ "resolver":"$webhook", "event": {} }`, expected: http.StatusOK},
 }
 
 func Test_Route_Invalid_Body(t *testing.T) {

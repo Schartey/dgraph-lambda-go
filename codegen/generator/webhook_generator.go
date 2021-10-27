@@ -72,7 +72,7 @@ import(
 
 type WebhookResolverInterface interface {
 {{- range $model := .Models}}
-	Webhook_{{ $model.TypeName | typeName }}(ctx context.Context, event api.Event) *api.LambdaError{{ end }}
+	Webhook_{{ $model.TypeName | typeName }}(ctx context.Context, event *api.Event) *api.LambdaError{{ end }}
 }
 
 type WebhookResolver struct {
@@ -80,6 +80,6 @@ type WebhookResolver struct {
 }
 
 {{ range $model := .Models}}
-func (w *WebhookResolver) Webhook_{{ $model.TypeName | typeName }}(ctx context.Context, event api.Event) *api.LambdaError { {{ body (printf "Webhook_%s" ($model.TypeName | typeName)) $.Rewriter }}}
+func (w *WebhookResolver) Webhook_{{ $model.TypeName | typeName }}(ctx context.Context, event *api.Event) *api.LambdaError { {{ body (printf "Webhook_%s" ($model.TypeName | typeName)) $.Rewriter }}}
 {{ end }}
 `))
