@@ -1,24 +1,24 @@
+
 package generated
 
-import (
+import(
+	"github.com/schartey/dgraph-lambda-go/api"
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
-	"strings"
-
-	"github.com/schartey/dgraph-lambda-go/api"
+	"encoding/json"
 	"github.com/schartey/dgraph-lambda-go/examples/lambda/model"
 	"github.com/schartey/dgraph-lambda-go/examples/lambda/resolvers"
+	"strings"
 )
 
 type Executer struct {
 	api.ExecuterInterface
-	fieldResolver      resolvers.FieldResolver
-	queryResolver      resolvers.QueryResolver
-	mutationResolver   resolvers.MutationResolver
-	middlewareResolver resolvers.MiddlewareResolver
-	webhookResolver    resolvers.WebhookResolver
+	fieldResolver    	resolvers.FieldResolver
+	queryResolver    	resolvers.QueryResolver
+	mutationResolver 	resolvers.MutationResolver
+	middlewareResolver 	resolvers.MiddlewareResolver
+	webhookResolver 	resolvers.WebhookResolver
 }
 
 func NewExecuter(resolver *resolvers.Resolver) api.ExecuterInterface {
@@ -26,7 +26,7 @@ func NewExecuter(resolver *resolvers.Resolver) api.ExecuterInterface {
 }
 
 func (e Executer) Resolve(ctx context.Context, request *api.Request) (response []byte, err *api.LambdaError) {
-	if request.Event.Operation != "" {
+	if request.Resolver == "$webhook" {
 		return nil, e.resolveWebhook(ctx, request)
 	} else {
 		parentsBytes, underlyingError := request.Parents.MarshalJSON()
@@ -53,142 +53,142 @@ func (e Executer) Resolve(ctx context.Context, request *api.Request) (response [
 
 func (e Executer) middleware(mc *api.MiddlewareContext) (err *api.LambdaError) {
 	switch mc.Request.Resolver {
-	case "User.active":
-		{
-			if err = e.middlewareResolver.Middleware_admin(mc); err != nil {
-				return err
+		case "User.active":
+			{
+				if err = e.middlewareResolver.Middleware_admin(mc); err != nil {
+					return err
+				}
+				break
 			}
-			break
-		}
-
-	case "Query.getHotelByName":
-		{
-			if err = e.middlewareResolver.Middleware_user(mc); err != nil {
-				return err
+		
+		case "Query.getHotelByName":
+			{
+				if err = e.middlewareResolver.Middleware_user(mc); err != nil {
+					return err
+				}
+				break
 			}
-			break
-		}
-
-	case "Query.getTopAuthors":
-		{
-			if err = e.middlewareResolver.Middleware_user(mc); err != nil {
-				return err
+		
+		case "Query.getTopAuthors":
+			{
+				if err = e.middlewareResolver.Middleware_user(mc); err != nil {
+					return err
+				}
+				if err = e.middlewareResolver.Middleware_admin(mc); err != nil {
+					return err
+				}
+				break
 			}
-			if err = e.middlewareResolver.Middleware_admin(mc); err != nil {
-				return err
+		
+		case "Mutation.newAuthor":
+			{
+				if err = e.middlewareResolver.Middleware_admin(mc); err != nil {
+					return err
+				}
+				break
 			}
-			break
-		}
-
-	case "Mutation.newAuthor":
-		{
-			if err = e.middlewareResolver.Middleware_admin(mc); err != nil {
-				return err
-			}
-			break
-		}
-
+		
 	}
 	return nil
 }
 
 func (e Executer) resolveField(ctx context.Context, request *api.Request, parentsBytes []byte) (response []byte, err *api.LambdaError) {
 	switch request.Resolver {
-	case "User.active":
-		{
-			var parents []*model.User
-			json.Unmarshal(parentsBytes, &parents)
+		case "User.active":
+			{
+				var parents []*model.User
+				json.Unmarshal(parentsBytes, &parents)
 
-			result, err := e.fieldResolver.User_active(ctx, parents, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
+				result, err := e.fieldResolver.User_active(ctx, parents, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
 
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
 			}
-			break
-		}
-	case "Post.additionalInfo":
-		{
-			var parents []*model.Post
-			json.Unmarshal(parentsBytes, &parents)
+		case "Post.additionalInfo":
+			{
+				var parents []*model.Post
+				json.Unmarshal(parentsBytes, &parents)
 
-			result, err := e.fieldResolver.Post_additionalInfo(ctx, parents, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
+				result, err := e.fieldResolver.Post_additionalInfo(ctx, parents, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
 
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
 			}
-			break
-		}
-	case "User.rank":
-		{
-			var parents []*model.User
-			json.Unmarshal(parentsBytes, &parents)
+		case "User.rank":
+			{
+				var parents []*model.User
+				json.Unmarshal(parentsBytes, &parents)
 
-			result, err := e.fieldResolver.User_rank(ctx, parents, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
+				result, err := e.fieldResolver.User_rank(ctx, parents, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
 
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
 			}
-			break
-		}
-	case "User.reputation":
-		{
-			var parents []*model.User
-			json.Unmarshal(parentsBytes, &parents)
+		case "User.reputation":
+			{
+				var parents []*model.User
+				json.Unmarshal(parentsBytes, &parents)
 
-			result, err := e.fieldResolver.User_reputation(ctx, parents, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
+				result, err := e.fieldResolver.User_reputation(ctx, parents, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
 
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
 			}
-			break
-		}
-	case "Figure.size":
-		{
-			var parents []*model.Figure
-			json.Unmarshal(parentsBytes, &parents)
+		case "Figure.size":
+			{
+				var parents []*model.Figure
+				json.Unmarshal(parentsBytes, &parents)
 
-			result, err := e.fieldResolver.Figure_size(ctx, parents, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
+				result, err := e.fieldResolver.Figure_size(ctx, parents, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
 
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
 			}
-			break
-		}
 	}
 
 	return nil, &api.LambdaError{Underlying: errors.New("could not find query resolver"), Status: http.StatusNotFound}
@@ -196,89 +196,98 @@ func (e Executer) resolveField(ctx context.Context, request *api.Request, parent
 
 func (e Executer) resolveQuery(ctx context.Context, request *api.Request) (response []byte, err *api.LambdaError) {
 	switch request.Resolver {
-	case "Query.getApples":
-		{
-			result, err := e.queryResolver.Query_getApples(ctx, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
-
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
-			}
-			break
+         case "Query.getApples":
+	{	
+		result, err := e.queryResolver.Query_getApples(ctx, request.AuthHeader)
+		if err != nil {
+			return nil, err
 		}
-	case "Query.getHotelByName":
-		{
-			var name string
-			json.Unmarshal(request.Args["name"], &name)
-			result, err := e.queryResolver.Query_getHotelByName(ctx, name, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
 
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
-			}
-			break
+		var underlyingError error
+		response, underlyingError = json.Marshal(result)
+		if underlyingError != nil {
+			return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+		} else {
+			return response, nil
 		}
-	case "Query.getTopAuthors":
-		{
-			var id string
-			json.Unmarshal(request.Args["id"], &id)
-			result, err := e.queryResolver.Query_getTopAuthors(ctx, id, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
-
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
-			}
-			break
-		}
+		break
 	}
+         case "Query.getHotelByName":
+	{
+		var name string 
+		json.Unmarshal(request.Args["name"], &name)	
+		result, err := e.queryResolver.Query_getHotelByName(ctx, name, request.AuthHeader)
+		if err != nil {
+			return nil, err
+		}
+
+		var underlyingError error
+		response, underlyingError = json.Marshal(result)
+		if underlyingError != nil {
+			return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+		} else {
+			return response, nil
+		}
+		break
+	}
+         case "Query.getTopAuthors":
+	{
+		var id string 
+		json.Unmarshal(request.Args["id"], &id)	
+		result, err := e.queryResolver.Query_getTopAuthors(ctx, id, request.AuthHeader)
+		if err != nil {
+			return nil, err
+		}
+
+		var underlyingError error
+		response, underlyingError = json.Marshal(result)
+		if underlyingError != nil {
+			return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+		} else {
+			return response, nil
+		}
+		break
+	}
+    }
 
 	return nil, &api.LambdaError{Underlying: errors.New("could not find query resolver"), Status: http.StatusNotFound}
 }
 
 func (e Executer) resolveMutation(ctx context.Context, request *api.Request) (response []byte, err *api.LambdaError) {
 	switch request.Resolver {
-	case "Mutation.newAuthor":
-		{
-			var name string
-			json.Unmarshal(request.Args["name"], &name)
-			result, err := e.mutationResolver.Mutation_newAuthor(ctx, name, request.AuthHeader)
-			if err != nil {
-				return nil, err
-			}
+		case "Mutation.newAuthor":
+			{
+				var name string 
+				json.Unmarshal(request.Args["name"], &name)	
+				result, err := e.mutationResolver.Mutation_newAuthor(ctx, name, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
 
-			var underlyingError error
-			response, underlyingError = json.Marshal(result)
-			if underlyingError != nil {
-				return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
-			} else {
-				return response, nil
+				var underlyingError error
+				response, underlyingError = json.Marshal(result)
+				if underlyingError != nil {
+					return nil, &api.LambdaError{Underlying: underlyingError, Status: http.StatusInternalServerError}
+				} else {
+					return response, nil
+				}
+				break
 			}
-			break
-		}
-	}
+    }
 
 	return nil, &api.LambdaError{Underlying: errors.New("could not find query resolver"), Status: http.StatusNotFound}
 }
 
 func (e Executer) resolveWebhook(ctx context.Context, request *api.Request) (err *api.LambdaError) {
-
+	switch request.Event.TypeName {
+	case "Hotel":
+		err = e.webhookResolver.Webhook_Hotel(ctx, request.Event)
+		return err
+	case "User":
+		err = e.webhookResolver.Webhook_User(ctx, request.Event)
+		return err
+	}
+	
 	return &api.LambdaError{Underlying: errors.New("could not find webhook resolver"), Status: http.StatusNotFound}
 }
+

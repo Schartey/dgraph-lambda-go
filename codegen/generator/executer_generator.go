@@ -130,7 +130,7 @@ func NewExecuter(resolver *{{.ResolverPackageName}}.Resolver) api.ExecuterInterf
 }
 
 func (e Executer) Resolve(ctx context.Context, request *api.Request) (response []byte, err *api.LambdaError) {
-	if request.Event.Operation != "" {
+	if request.Resolver == "$webhook" {
 		return nil, e.resolveWebhook(ctx, request)
 	} else {
 		parentsBytes, underlyingError := request.Parents.MarshalJSON()
