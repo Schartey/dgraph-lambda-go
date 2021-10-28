@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/dgraph-io/dgraph v1.2.8
 	github.com/go-chi/chi v3.3.2+incompatible
+	github.com/json-iterator/go v1.1.12
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/twpayne/go-geom v1.4.0

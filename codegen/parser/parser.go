@@ -210,10 +210,17 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 				return nil, err
 			}
 
+			tag := `json:"` + field.Name + `"`
+			if field.Name == "id" {
+				tag += ` dql:"uid"`
+			} else {
+				tag += ` dql:"` + it.Name + "." + field.Name + `"`
+			}
+
 			modelField := &Field{
 				Name:        field.Name,
 				Description: field.Description,
-				Tag:         `json:"` + field.Name + `"`,
+				Tag:         tag,
 				GoType:      fieldGoType,
 				IsArray:     graphql.IsArray(field.Type.String()),
 			}
@@ -341,10 +348,17 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 					return nil, err
 				}
 
+				tag := `json:"` + field.Name + `"`
+				if field.Name == "id" {
+					tag += ` dql:"uid"`
+				} else {
+					tag += ` dql:"` + it.Name + "." + field.Name + `"`
+				}
+
 				modelField := &Field{
 					Name:        field.Name,
 					Description: field.Description,
-					Tag:         `json:"` + field.Name + `"`,
+					Tag:         tag,
 					GoType:      fieldGoType,
 					IsArray:     graphql.IsArray(field.Type.String()),
 				}
