@@ -32,6 +32,9 @@ When first initializing the lambda server it will generate a basic lambda.yaml f
       filename: lambda/model/models_gen.go
       package: model
 
+    force:
+      - "Home"
+
     autobind:
       - "github.com/schartey/dgraph-lambda-go/examples/models"
 
@@ -54,6 +57,10 @@ This option allows you to select a file path where generated code should go that
 ### Model
 
 This option allows you to define a file path where the generated models should be placed.
+
+### Force
+
+Force generation of specific models
 
 ### Autobind
 
@@ -190,12 +197,71 @@ Then you can access the client in your resolvers like this
 ```golang
 func (q *QueryResolver) Query_randomUser(ctx context.Context, seed string, authHeader api.AuthHeader) (*model.User, error) {
     // Oversimplified
-    user, err := s.dql.NewTxn().Do(ctx, req)
+    vars := map[string]string{"$uid": uid}
+	query := `
+		query findUser($uid: string) {
+			findUser(func: uid($uid)) {
+				id: uid
+			}
+		}`
+
+	res, err := s.dql.NewReadOnlyTxn().QueryWithVars(ctx, query, vars)
 	if err != nil {
-		return nil, &api.LambdaError{ Underlying: errors.New("User not found"), Status: api.NOT_FOUND}
+		return nil, err
 	}
-    return user, nil
+
+    // You can use the provided dql json unmarshaller
+	var findUserResult struct {
+        FindUser []model.User `dql:"findUser"`
+    }
+	dson.Unmarshal(res.GetJson(), &findUserResult)
+
+	return &findUserResult.FindUser[0], nil
 }
+```
+
+## Notes
+- When using graphql to generate the dgraph schema, type fields are prefixed with the type (Type.field). dgraph-lambda-go provides a json parser that uses the tag "dql" and is able to convert dql query results into the generated models using jsoniter. Example:
+
+Schema
+```graphql
+type User {
+    id: ID!
+    username: String!
+}
+```
+
+Model
+```golang
+type User struct {
+	Id       string `json:"id" dql:"uid"`
+	Username string `json:"username" dql:"User.username"`
+}
+```
+
+Code
+```golang
+    vars := map[string]string{"$uid": uid}
+	query := `
+		query findUser($uid: string) {
+			findUser(func: uid($uid)) {
+				id: uid
+			}
+		}`
+
+	res, err := s.dql.NewReadOnlyTxn().QueryWithVars(ctx, query, vars)
+	if err != nil {
+		return nil, err
+	}
+
+// ======== Here we use the dson unmarshaller ======
+	var findUserResult struct {
+        FindUser []model.User `dql:"findUser"`
+    }
+	dson.Unmarshal(res.GetJson(), &findUserResult)
+// =================================================
+
+	return &findUserResult.FindUser[0], nil
 ```
 ## Known Issues
 

@@ -21,42 +21,42 @@ type Shape interface {
 	IsShape()
 }
 type Apple struct {
-		Id string `json:"id"`
-		Price int64 `json:"price"`
-		Color string `json:"color"`
+		Id string `json:"id" dql:"uid"`
+		Price int64 `json:"price" dql:"Apple.price"`
+		Color string `json:"color" dql:"Apple.color"`
 }
 type Author struct {
-		Id string `json:"id"`
-		Name string `json:"name"`
-		Posts []*Post `json:"posts"`
-		RecentlyLiked []*Post `json:"recentlyLiked"`
-		Friends []*Author `json:"friends"`
+		Id string `json:"id" dql:"uid"`
+		Name string `json:"name" dql:"Author.name"`
+		Posts []*Post `json:"posts" dql:"Author.posts"`
+		RecentlyLiked []*Post `json:"recentlyLiked" dql:"Author.recentlyLiked"`
+		Friends []*Author `json:"friends" dql:"Author.friends"`
 }
 type Figure struct {
-		Id string `json:"id"`
-		Shape string `json:"shape"`
-		Color string `json:"color"`
-		Size int64 `json:"size"`
+		Id string `json:"id" dql:"uid"`
+		Shape string `json:"shape" dql:"Figure.shape"`
+		Color string `json:"color" dql:"Figure.color"`
+		Size int64 `json:"size" dql:"Figure.size"`
 }
 type Hotel struct {
-		Id string `json:"id"`
-		Name string `json:"name"`
-		Location *geom.T `json:"location"`
-		Area *geom.T `json:"area"`
+		Id string `json:"id" dql:"uid"`
+		Name string `json:"name" dql:"Hotel.name"`
+		Location *geom.T `json:"location" dql:"Hotel.location"`
+		Area *geom.T `json:"area" dql:"Hotel.area"`
 }
 type PointList struct {
-		Points []*geom.T `json:"points"`
+		Points []*geom.T `json:"points" dql:"PointList.points"`
 }
 type User struct {
-		UserID string `json:"userID"`
-		Credentials *models.Credentials `json:"credentials"`
-		Name string `json:"name"`
-		LastSignIn *time.Time `json:"lastSignIn"`
-		RecentScores []float64 `json:"recentScores"`
-		Likes int64 `json:"likes"`
-		Reputation int64 `json:"reputation"`
-		Rank int64 `json:"rank"`
-		Active bool `json:"active"`
+		UserID string `json:"userID" dql:"User.userID"`
+		Credentials *models.Credentials `json:"credentials" dql:"User.credentials"`
+		Name string `json:"name" dql:"User.name"`
+		LastSignIn *time.Time `json:"lastSignIn" dql:"User.lastSignIn"`
+		RecentScores []float64 `json:"recentScores" dql:"User.recentScores"`
+		Likes int64 `json:"likes" dql:"User.likes"`
+		Reputation int64 `json:"reputation" dql:"User.reputation"`
+		Rank int64 `json:"rank" dql:"User.rank"`
+		Active bool `json:"active" dql:"User.active"`
 }
 
 type Tag string
