@@ -128,9 +128,10 @@ type Parser struct {
 	schema   *ast.Schema
 	tree     *Tree
 	packages *internal.Packages
+	force    []string
 }
 
-func NewParser(schema *ast.Schema, packages *internal.Packages) *Parser {
+func NewParser(schema *ast.Schema, packages *internal.Packages, force []string) *Parser {
 	return &Parser{schema: schema, tree: &Tree{
 		ModelTree: &ModelTree{
 			Interfaces: make(map[string]*Interface),
@@ -146,6 +147,7 @@ func NewParser(schema *ast.Schema, packages *internal.Packages) *Parser {
 		Middleware: make(map[string]string),
 	},
 		packages: packages,
+		force:    force,
 	}
 }
 
@@ -419,6 +421,12 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 }
 
 func (p *Parser) hasLambda(def *ast.Definition) bool {
+
+	for _, f := range p.force {
+		if f == def.Name {
+			return true
+		}
+	}
 	if def.Directives.ForName("lambdaOnMutate") != nil {
 		return true
 	}

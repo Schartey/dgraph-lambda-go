@@ -37,6 +37,7 @@ type Config struct {
 	Exec           PackageConfig  `yaml:"exec"`
 	Model          PackageConfig  `yaml:"model"`
 	Resolver       ResolverConfig `yaml:"resolver"`
+	Force          []string       `yaml:"force"`
 	AutoBind       []string       `yaml:"autobind"`
 	Server         struct {
 		Standalone bool `yaml:"standalone"`

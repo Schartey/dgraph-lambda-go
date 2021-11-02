@@ -41,7 +41,7 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
-		parser := parser.NewParser(config.Schema, config.Packages)
+		parser := parser.NewParser(config.Schema, config.Packages, config.Force)
 		parsedTree, err := parser.Parse()
 		if err != nil {
 			return err
