@@ -1,32 +1,26 @@
 package rewriter
 
 import (
-	"fmt"
 	"go/ast"
-	"go/token"
-	"io/ioutil"
 	"path"
 	"strings"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/internal"
-	"golang.org/x/tools/go/packages"
 )
 
 type Rewriter struct {
 	config           *config.Config
 	parsedTree       *parser.Tree
-	files            map[string]string
 	RewriteBodies    map[string]string
 	DeprecatedBodies map[string]string
 }
 
 func New(config *config.Config, parsedTree *parser.Tree) *Rewriter {
-	files := make(map[string]string)
 	rewriteBodies := make(map[string]string)
 	deprecatedBodies := make(map[string]string)
-	return &Rewriter{config: config, parsedTree: parsedTree, files: files, RewriteBodies: rewriteBodies, DeprecatedBodies: deprecatedBodies}
+	return &Rewriter{config: config, parsedTree: parsedTree, RewriteBodies: rewriteBodies, DeprecatedBodies: deprecatedBodies}
 }
 
 func (r *Rewriter) Load() error {
@@ -54,7 +48,7 @@ func (r *Rewriter) Load() error {
 
 					for _, query := range r.parsedTree.ResolverTree.Queries {
 						if query.Name == queryName {
-							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -66,7 +60,7 @@ func (r *Rewriter) Load() error {
 
 					for _, mutation := range r.parsedTree.ResolverTree.Mutations {
 						if mutation.Name == mutationName {
-							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -78,7 +72,7 @@ func (r *Rewriter) Load() error {
 
 					for _, middleware := range r.parsedTree.Middleware {
 						if middleware == middlewareName {
-							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -90,7 +84,7 @@ func (r *Rewriter) Load() error {
 
 					for _, model := range r.parsedTree.ModelTree.Models {
 						if model.TypeName.Name() == webhookName {
-							r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -101,43 +95,17 @@ func (r *Rewriter) Load() error {
 					splitName := strings.Split(d.Name.Name, "_")
 
 					if splitName[0] == fieldResolver.Parent.Name && splitName[1] == fieldResolver.Field.Name {
-						r.RewriteBodies[d.Name.Name] = r.getSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+						_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 						found = true
 						break
 					}
 				}
 
 				if !found {
-					r.DeprecatedBodies[d.Name.Name] = r.getSource(pkg, d.Pos(), d.End())
+					_, r.DeprecatedBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Pos(), d.End())
 				}
 			}
 		}
 	}
 	return nil
-}
-
-func (r *Rewriter) getSource(pkg *packages.Package, start, end token.Pos) string {
-	startPos := pkg.Fset.Position(start)
-	endPos := pkg.Fset.Position(end)
-
-	if startPos.Filename != endPos.Filename {
-		panic("cant get source spanning multiple files")
-	}
-
-	file := r.getFile(startPos.Filename)
-	return file[startPos.Offset:endPos.Offset]
-}
-
-func (r *Rewriter) getFile(filename string) string {
-	if _, ok := r.files[filename]; !ok {
-		b, err := ioutil.ReadFile(filename)
-		if err != nil {
-			panic(fmt.Errorf("unable to load file, already exists: %s", err.Error()))
-		}
-
-		r.files[filename] = string(b)
-
-	}
-
-	return r.files[filename]
 }

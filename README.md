@@ -64,7 +64,7 @@ Force generation of specific models
 
 ### Autobind
 
-You might have some predefined models already. Here you can define a list of packages in which models can be found that should be used instead of generating them.
+You might have some predefined models already. Here you can define a list of packages in which models can be found that should be used instead of generating them. Models you add within the generated model folder will be autobound automatically.
 
 ### Resolver
 
@@ -221,6 +221,9 @@ func (q *QueryResolver) Query_randomUser(ctx context.Context, seed string, authH
 ```
 
 ## Notes
+- Working with Cyclic types
+If you have types in your schema with @hasInverse and one of them should not be generated, but you provide your own (see Autobind), then you should put that type declaration into the generation folder with the models_gen.go file. Otherwise the imports will be cyclic and Golang does not like that. See example under examples/lambda/model/cyclic_model.go
+
 - When using graphql to generate the dgraph schema, type fields are prefixed with the type (Type.field). dgraph-lambda-go provides a json parser that uses the tag "dql" and is able to convert dql query results into the generated models using jsoniter. Example:
 
 Schema

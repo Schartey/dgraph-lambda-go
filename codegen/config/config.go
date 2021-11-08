@@ -7,6 +7,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/schartey/dgraph-lambda-go/codegen/graphql"
@@ -233,7 +234,11 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 				if model.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, model.Name) {
 						model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), model.Name, nil)
+						model.GoType.Autobind = true
 						fmt.Printf("Autobind: %s -> %s\n", model.Name, model.GoType.TypeName.Pkg().Name())
+					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, model.Name) {
+						model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), model.Name, nil)
+						model.GoType.Autobind = true
 					} else {
 						model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), model.Name, nil)
 					}
@@ -289,6 +294,13 @@ func (c *Config) pkgHasType(pkg *packages.Package, name string) bool {
 		if name == typeName {
 			return true
 		}
+	}
+	return false
+}
+
+func (c *Config) isCustomInDefaultPkg(pkg *packages.Package, name string) bool {
+	if fileName, err := c.Packages.GetFileNameType(pkg.PkgPath, name); err == nil && !strings.Contains(fileName, c.Model.Filename) {
+		return true
 	}
 	return false
 }

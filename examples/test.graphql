@@ -177,6 +177,18 @@ type Hotel @lambdaOnMutate(add: true, update: true, delete: true) {
   area: Polygon
 }
 
+type CyclicType @lambdaOnMutate(add: true, update: true, delete: true) {
+    id: ID!
+    name: String!
+    inverseType: InverseType!
+}
+
+type InverseType {
+    id: ID!
+    name: String!
+    cyclicType: CyclicType! @hasInverse(field: inverseType)
+}
+
 type Query {
     getApples: [Apple] @lambda
     """

@@ -34,6 +34,11 @@ type Author struct {
 	RecentlyLiked []*Post   `json:"recentlyLiked" dql:"Author.recentlyLiked"`
 	Friends       []*Author `json:"friends" dql:"Author.friends"`
 }
+type CyclicType struct {
+	Id          string       `json:"id" dql:"uid"`
+	Name        string       `json:"name" dql:"CyclicType.name"`
+	InverseType *InverseType `json:"inverseType" dql:"CyclicType.inverseType"`
+}
 type Figure struct {
 	Id    string `json:"id" dql:"uid"`
 	Shape string `json:"shape" dql:"Figure.shape"`

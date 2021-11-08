@@ -23,6 +23,7 @@ const (
 )
 
 type GoType struct {
+	Autobind bool
 	TypeName *types.TypeName
 }
 

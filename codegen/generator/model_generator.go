@@ -30,7 +30,7 @@ func generateModel(c *config.Config, parsedTree *parser.Tree) error {
 	var scalars = make(map[string]*parser.Scalar)
 
 	for _, m := range parsedTree.ModelTree.Models {
-		if m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
+		if m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
 			models[m.Name] = m
 		}
 		for _, f := range m.Fields {
