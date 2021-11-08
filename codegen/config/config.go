@@ -251,7 +251,11 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 				if it.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, it.Name) {
 						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), it.Name, nil)
+						it.GoType.Autobind = true
 						fmt.Printf("Autobind: %s -> %s\n", it.Name, it.GoType.TypeName.Pkg().Name())
+					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, it.Name) {
+						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
+						it.GoType.Autobind = true
 					} else {
 						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
 					}
@@ -264,7 +268,11 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 				if it.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, it.Name) {
 						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), it.Name, nil)
+						it.GoType.Autobind = true
 						fmt.Printf("Autobind: %s -> %s\n", it.Name, it.GoType.TypeName.Pkg().Name())
+					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, it.Name) {
+						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
+						it.GoType.Autobind = true
 					} else {
 						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
 					}
@@ -277,7 +285,11 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 				if it.GoType.TypeName.Pkg() == nil {
 					if c.pkgHasType(pkg, it.Name) {
 						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), it.Name, nil)
+						it.GoType.Autobind = true
 						fmt.Printf("Autobind: %s -> %s\n", it.Name, it.GoType.TypeName.Pkg().Name())
+					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, it.Name) {
+						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
+						it.GoType.Autobind = true
 					} else {
 						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
 					}

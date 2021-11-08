@@ -55,7 +55,6 @@ func (p *Packages) PackageFromPath(importPath string) (*packages.Package, error)
 }
 
 func (p *Packages) GetFileNameType(importPath string, t string) (string, error) {
-	fmt.Println(t)
 	if pkg, err := p.PackageFromPath(importPath); err != nil {
 		return "", err
 	} else {
