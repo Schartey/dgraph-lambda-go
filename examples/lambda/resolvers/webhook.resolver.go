@@ -1,9 +1,9 @@
-
 package resolvers
 
-import(
-	"github.com/schartey/dgraph-lambda-go/api"
+import (
 	"context"
+
+	"github.com/schartey/dgraph-lambda-go/api"
 )
 
 type WebhookResolverInterface interface {
@@ -15,12 +15,10 @@ type WebhookResolver struct {
 	*Resolver
 }
 
-
-func (w *WebhookResolver) Webhook_Hotel(ctx context.Context, event *api.Event) *api.LambdaError {                           
+func (w *WebhookResolver) Webhook_Hotel(ctx context.Context, event *api.Event) *api.LambdaError {
 	return nil
 }
 
-func (w *WebhookResolver) Webhook_User(ctx context.Context, event *api.Event) *api.LambdaError {                           
+func (w *WebhookResolver) Webhook_User(ctx context.Context, event *api.Event) *api.LambdaError {
 	return nil
 }
-

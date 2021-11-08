@@ -2,6 +2,7 @@ package internal
 
 import (
 	"errors"
+	"go/build"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -56,6 +57,18 @@ func GetModuleName() (string, error) {
 
 func Tidy() error {
 	cmd := exec.Command("go", "mod", "tidy")
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func FixImports() error {
+	gopath := os.Getenv("GOPATH")
+	if gopath == "" {
+		gopath = build.Default.GOPATH
+	}
+	cmd := exec.Command(filepath.Join(gopath, "bin", "goimports"), "-w", ".")
 	if err := cmd.Run(); err != nil {
 		return err
 	}

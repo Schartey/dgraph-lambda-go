@@ -1,7 +1,6 @@
-
 package resolvers
 
-import(
+import (
 	"github.com/schartey/dgraph-lambda-go/api"
 )
 
@@ -14,12 +13,10 @@ type MiddlewareResolver struct {
 	*Resolver
 }
 
-
-func (m *MiddlewareResolver) Middleware_admin(mc *api.MiddlewareContext) *api.LambdaError {    
+func (m *MiddlewareResolver) Middleware_admin(mc *api.MiddlewareContext) *api.LambdaError {
 	return nil
 }
 
-func (m *MiddlewareResolver) Middleware_user(mc *api.MiddlewareContext) *api.LambdaError {    
+func (m *MiddlewareResolver) Middleware_user(mc *api.MiddlewareContext) *api.LambdaError {
 	return nil
 }
-

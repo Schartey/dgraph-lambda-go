@@ -1,9 +1,9 @@
-
 package resolvers
 
-import(
-	"github.com/schartey/dgraph-lambda-go/api"
+import (
 	"context"
+
+	"github.com/schartey/dgraph-lambda-go/api"
 )
 
 type MutationResolverInterface interface {
@@ -13,7 +13,7 @@ type MutationResolverInterface interface {
 type MutationResolver struct {
 	*Resolver
 }
-func (q *MutationResolver) Mutation_newAuthor(ctx context.Context, name string, authHeader api.AuthHeader) (string, *api.LambdaError) {                                 
+
+func (q *MutationResolver) Mutation_newAuthor(ctx context.Context, name string, authHeader api.AuthHeader) (string, *api.LambdaError) {
 	return "", nil
 }
-

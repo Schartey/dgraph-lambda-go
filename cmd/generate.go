@@ -61,6 +61,11 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
+		// Run go mod tidy
+		if err := internal.FixImports(); err != nil {
+			return err
+		}
+
 		return nil
 	},
 }
