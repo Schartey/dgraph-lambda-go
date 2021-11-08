@@ -4,8 +4,9 @@ import (
 	"errors"
 	"reflect"
 	"strings"
+	"time"
 
-	"github.com/dgraph-io/dgraph/types"
+	"github.com/twpayne/go-geom"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 
@@ -34,6 +35,28 @@ var defaultReturnForType = map[string]string{
 	"float64": "0.0",
 }
 
+var bytes []byte
+var i int64
+var f float64
+var b bool
+var t time.Time
+var s string
+var g geom.T
+var ui uint64
+
+var typeNameMap = map[string]interface{}{
+	"default":  &s,
+	"binary":   &bytes,
+	"int":      &i,
+	"float":    &f,
+	"bool":     &b,
+	"datetime": &t,
+	"geo":      &g,
+	"uid":      &ui,
+	"string":   &s,
+	"password": &s,
+}
+
 type GoTypeDefinition struct {
 	TypeName string
 	PkgName  string
@@ -41,13 +64,12 @@ type GoTypeDefinition struct {
 
 func SchemaDefToGoDef(def *ast.Definition) (pkgPath string, typeName string, err error) {
 	dgraphTypeName := strings.ToLower(inbuiltTypeToDgraph[def.Name])
-	typeId, ok := types.TypeForName(dgraphTypeName)
+	t, ok := typeNameMap[dgraphTypeName]
 
 	if !ok {
 		return pkgPath, typeName, errors.New("TypeId not found")
 	}
-	val := types.ValueForType(typeId)
-	reflectType := reflect.Indirect(reflect.ValueOf(val.Value)).Type()
+	reflectType := reflect.Indirect(reflect.ValueOf(t)).Type()
 
 	pkgPath = reflectType.PkgPath()
 	typeName = reflectType.Name()
