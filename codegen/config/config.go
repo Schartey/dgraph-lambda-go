@@ -186,36 +186,20 @@ func (c *Config) loadSchema() error {
 func (c *Config) Bind(parsedTree *parser.Tree) error {
 
 	if len(c.AutoBind) == 0 {
-		for _, model := range parsedTree.ModelTree.Models {
-			if model.GoType.TypeName.Exported() {
-				if model.GoType.TypeName.Pkg() == nil {
-					model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), model.Name, nil)
-				}
-			}
+		for _, it := range parsedTree.ModelTree.Models {
+			c.bindPackage(nil, it.GoType, it.Name)
 		}
 
 		for _, it := range parsedTree.ModelTree.Interfaces {
-			if it.GoType.TypeName.Exported() {
-				if it.GoType.TypeName.Pkg() == nil {
-					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-				}
-			}
+			c.bindPackage(nil, it.GoType, it.Name)
 		}
 
 		for _, it := range parsedTree.ModelTree.Enums {
-			if it.GoType.TypeName.Exported() {
-				if it.GoType.TypeName.Pkg() == nil {
-					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-				}
-			}
+			c.bindPackage(nil, it.GoType, it.Name)
 		}
 
 		for _, it := range parsedTree.ModelTree.Scalars {
-			if it.GoType.TypeName.Exported() {
-				if it.GoType.TypeName.Pkg() == nil {
-					it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-				}
-			}
+			c.bindPackage(nil, it.GoType, it.Name)
 		}
 	}
 
@@ -229,19 +213,10 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 			}
 		}
 
-		for _, model := range parsedTree.ModelTree.Models {
-			if model.GoType.TypeName.Exported() {
-				if model.GoType.TypeName.Pkg() == nil {
-					if c.pkgHasType(pkg, model.Name) {
-						model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), model.Name, nil)
-						model.GoType.Autobind = true
-						fmt.Printf("Autobind: %s -> %s\n", model.Name, model.GoType.TypeName.Pkg().Name())
-					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, model.Name) {
-						model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), model.Name, nil)
-						model.GoType.Autobind = true
-					} else {
-						model.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), model.Name, nil)
-					}
+		for _, it := range parsedTree.ModelTree.Models {
+			if it.GoType.TypeName.Exported() {
+				if it.GoType.TypeName.Pkg() == nil {
+					c.bindPackage(pkg, it.GoType, it.Name)
 				}
 			}
 		}
@@ -249,16 +224,7 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 		for _, it := range parsedTree.ModelTree.Interfaces {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
-					if c.pkgHasType(pkg, it.Name) {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), it.Name, nil)
-						it.GoType.Autobind = true
-						fmt.Printf("Autobind: %s -> %s\n", it.Name, it.GoType.TypeName.Pkg().Name())
-					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, it.Name) {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-						it.GoType.Autobind = true
-					} else {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-					}
+					c.bindPackage(pkg, it.GoType, it.Name)
 				}
 			}
 		}
@@ -266,16 +232,7 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 		for _, it := range parsedTree.ModelTree.Enums {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
-					if c.pkgHasType(pkg, it.Name) {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), it.Name, nil)
-						it.GoType.Autobind = true
-						fmt.Printf("Autobind: %s -> %s\n", it.Name, it.GoType.TypeName.Pkg().Name())
-					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, it.Name) {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-						it.GoType.Autobind = true
-					} else {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-					}
+					c.bindPackage(pkg, it.GoType, it.Name)
 				}
 			}
 		}
@@ -283,16 +240,7 @@ func (c *Config) Bind(parsedTree *parser.Tree) error {
 		for _, it := range parsedTree.ModelTree.Scalars {
 			if it.GoType.TypeName.Exported() {
 				if it.GoType.TypeName.Pkg() == nil {
-					if c.pkgHasType(pkg, it.Name) {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), it.Name, nil)
-						it.GoType.Autobind = true
-						fmt.Printf("Autobind: %s -> %s\n", it.Name, it.GoType.TypeName.Pkg().Name())
-					} else if c.isCustomInDefaultPkg(c.DefaultModelPackage, it.Name) {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-						it.GoType.Autobind = true
-					} else {
-						it.GoType.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), it.Name, nil)
-					}
+					c.bindPackage(pkg, it.GoType, it.Name)
 				}
 			}
 		}
@@ -315,4 +263,19 @@ func (c *Config) isCustomInDefaultPkg(pkg *packages.Package, name string) bool {
 		return true
 	}
 	return false
+}
+
+func (c *Config) bindPackage(pkg *packages.Package, t *parser.GoType, name string) {
+	if t.TypeName.Exported() {
+		if c.isCustomInDefaultPkg(c.DefaultModelPackage, name) {
+			t.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), name, nil)
+			t.Autobind = true
+		} else if pkg != nil && pkg.PkgPath != c.DefaultModelPackage.PkgPath && c.pkgHasType(pkg, name) {
+			t.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), name, nil)
+			t.Autobind = true
+			fmt.Printf("Autobind: %s -> %s\n", name, t.TypeName.Pkg().Name())
+		} else {
+			t.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), name, nil)
+		}
+	}
 }

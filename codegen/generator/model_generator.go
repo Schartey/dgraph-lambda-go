@@ -40,17 +40,17 @@ func generateModel(c *config.Config, parsedTree *parser.Tree) error {
 		}
 	}
 	for _, m := range parsedTree.ModelTree.Enums {
-		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
+		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
 			enums[m.Name] = m
 		}
 	}
 	for _, m := range parsedTree.ModelTree.Interfaces {
-		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
+		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
 			interfaces[m.Name] = m
 		}
 	}
 	for _, m := range parsedTree.ModelTree.Scalars {
-		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath {
+		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
 			scalars[m.Name] = m
 		}
 	}
