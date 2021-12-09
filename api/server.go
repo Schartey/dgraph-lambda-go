@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 )
 
+// Interface for StandardExecuter and WASMExecuter
 type ExecuterInterface interface {
 	Resolve(ctx context.Context, request *Request) ([]byte, *LambdaError)
 }

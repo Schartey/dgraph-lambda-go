@@ -1,4 +1,4 @@
-package generator
+package gogen
 
 import (
 	"errors"
@@ -9,6 +9,7 @@ import (
 	"text/template"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
@@ -62,11 +63,11 @@ func generateMutationResolvers(c *config.Config, parsedTree *parser.Tree, r *rew
 
 var mutationResolverTemplate = template.Must(template.New("mutation-resolver").Funcs(template.FuncMap{
 	"ref":     returnRef,
-	"path":    pkgPath,
-	"pointer": pointer,
-	"argsW":   argsW,
-	"body":    body,
-	"is":      is,
+	"path":    generator.PkgPath,
+	"pointer": generator.Pointer,
+	"argsW":   generator.ArgsW,
+	"body":    generator.Body,
+	"is":      generator.Is,
 }).Parse(`
 package {{.PackageName}}
 

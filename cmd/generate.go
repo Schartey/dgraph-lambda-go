@@ -3,6 +3,8 @@ package cmd
 import (
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/codegen/generator"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator/gogen"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator/wasm"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 	"github.com/schartey/dgraph-lambda-go/internal"
@@ -28,36 +30,42 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
-		config, err := config.LoadConfigFile(moduleName, configFile)
+		c, err := config.LoadConfigFile(moduleName, configFile)
 		if err != nil {
 			return err
 		}
-		err = config.LoadConfig(configFile)
+		err = c.LoadConfig(configFile)
 		if err != nil {
 			return err
 		}
 
-		if err := config.LoadSchema(); err != nil {
+		if err := c.LoadSchema(); err != nil {
 			return err
 		}
 
-		parser := parser.NewParser(config.Schema, config.Packages, config.Force)
+		parser := parser.NewParser(c.Schema, c.Packages, c.Force)
 		parsedTree, err := parser.Parse()
 		if err != nil {
 			return err
 		}
 
-		if err := config.Bind(parsedTree); err != nil {
+		if err := c.Bind(parsedTree); err != nil {
 			return err
 		}
 
-		rewriter := rewriter.New(config, parsedTree)
+		rewriter := rewriter.New(c, parsedTree)
 
 		if err := rewriter.Load(); err != nil {
 			return err
 		}
 
-		if err := generator.Generate(config, parsedTree, rewriter); err != nil {
+		var gen generator.Generator
+		if c.Server.Lang == config.WASM {
+			gen = wasm.NewGenerator(c, parsedTree, rewriter)
+		} else {
+			gen = gogen.NewGenerator(c, parsedTree, rewriter)
+		}
+		if err := gen.Generate(); err != nil {
 			return err
 		}
 

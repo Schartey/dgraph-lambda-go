@@ -1,4 +1,4 @@
-package generator
+package gogen
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"golang.org/x/tools/go/packages"
 )
@@ -105,8 +106,8 @@ func modelRef(t *parser.GoType, isArray bool) string {
 
 var modelTemplate = template.Must(template.New("model").Funcs(template.FuncMap{
 	"ref":   modelRef,
-	"path":  pkgPath,
-	"title": title,
+	"path":  generator.PkgPath,
+	"title": generator.Title,
 }).Parse(`package {{.PackageName}}
 
 import(

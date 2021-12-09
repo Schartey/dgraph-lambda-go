@@ -40,6 +40,6 @@ var initCmd = &cli.Command{
 			return err
 		}
 
-		return generator.Init(config)
+		return generator.GenerateWorkspace(config)
 	},
 }

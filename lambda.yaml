@@ -19,4 +19,5 @@ resolver:
   filename_template: "{resolver}.resolver.go" # should also allow "{name}.resolvers.go"
 
 server:
-  standalone: true
+  mode: server
+  language: wasm

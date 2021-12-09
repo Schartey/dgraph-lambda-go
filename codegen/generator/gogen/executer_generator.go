@@ -1,4 +1,4 @@
-package generator
+package gogen
 
 import (
 	"go/types"
@@ -7,6 +7,7 @@ import (
 	"text/template"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
@@ -102,12 +103,12 @@ func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rew
 }
 
 var executerTemplate = template.Must(template.New("executer").Funcs(template.FuncMap{
-	"path":     pkgPath,
-	"typeName": typeName,
-	"ref":      resolverRef,
-	"untitle":  untitle,
-	"args":     args,
-	"pointer":  pointer,
+	"path":     generator.PkgPath,
+	"typeName": generator.TypeName,
+	"ref":      generator.ResolverRef,
+	"untitle":  generator.Untitle,
+	"args":     generator.Args,
+	"pointer":  generator.Pointer,
 }).Parse(`
 package {{.PackageName}}
 

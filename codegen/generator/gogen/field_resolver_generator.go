@@ -1,4 +1,4 @@
-package generator
+package gogen
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
 )
@@ -69,10 +70,10 @@ func fieldResolverBody(key string, rewriter *rewriter.Rewriter) string {
 
 var fieldResolverTemplate = template.Must(template.New("field-resolver").Funcs(template.FuncMap{
 	"ref":     modelRef,
-	"path":    pkgPath,
-	"pointer": pointer,
+	"path":    generator.PkgPath,
+	"pointer": generator.Pointer,
 	"body":    fieldResolverBody,
-	"is":      is,
+	"is":      generator.Is,
 }).Parse(`
 package {{.PackageName}}
 

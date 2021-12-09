@@ -21,6 +21,21 @@ import (
 
 var resolverTemplateRegex = regexp.MustCompile(`\{([^)]+)\}.resolver.*`)
 
+type Mode string
+
+const (
+	WASM_ONLY Mode = "wasm_only"
+	ROUTER    Mode = "router"
+	SERVER    Mode = "server"
+)
+
+type Lang string
+
+const (
+	GOLANG Lang = "golang"
+	WASM   Lang = "wasm"
+)
+
 type PackageConfig struct {
 	Filename string
 	Package  string
@@ -41,7 +56,8 @@ type Config struct {
 	Force          []string       `yaml:"force"`
 	AutoBind       []string       `yaml:"autobind"`
 	Server         struct {
-		Standalone bool `yaml:"standalone"`
+		Mode Mode `yaml:"mode"`
+		Lang Lang `yaml:"language"`
 	} `yaml:"server"`
 
 	Sources             []*ast.Source      `yaml:"-"`
