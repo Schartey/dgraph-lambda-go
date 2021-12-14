@@ -11,16 +11,16 @@ type AuthHeader struct {
 }
 
 type Directive struct {
-	Name      string                     `json:"name"`
-	Arguments map[string]json.RawMessage `json:"arguments"`
+	Name      string            `json:"name"`
+	Arguments map[string][]byte `json:"arguments"`
 }
 
 type SelectionField struct {
-	Alias        string                     `json:"alias"`
-	Name         string                     `json:"name"`
-	Arguments    map[string]json.RawMessage `json:"arguments"`
-	Directives   []Directive                `json:"directives"`
-	SelectionSet []SelectionField           `json:"slectionSet"`
+	Alias        string           `json:"alias"`
+	Name         string           `json:"name"`
+	Arguments    []byte           `json:"arguments"`
+	Directives   []Directive      `json:"directives"`
+	SelectionSet []SelectionField `json:"slectionSet"`
 }
 
 type InfoField struct {
@@ -28,13 +28,13 @@ type InfoField struct {
 }
 
 type Request struct {
-	AccessToken string                     `json:"X-Dgraph-AccessToken"`
-	Args        map[string]json.RawMessage `json:"args"`
-	Field       InfoField                  `json:"info"`
-	AuthHeader  AuthHeader                 `json:"authHeader"`
-	Resolver    string                     `json:"resolver"`
-	Parents     json.RawMessage            `json:"parents"`
-	Event       *Event                     `json:"event"`
+	AccessToken string            `json:"X-Dgraph-AccessToken"`
+	Args        map[string][]byte `json:"args"`
+	Info        InfoField         `json:"info"`
+	AuthHeader  AuthHeader        `json:"authHeader"`
+	Resolver    string            `json:"resolver"`
+	Parents     json.RawMessage   `json:"parents"`
+	Event       *Event            `json:"event"`
 }
 
 type Event struct {

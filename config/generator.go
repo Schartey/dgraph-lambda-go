@@ -1,54 +1,57 @@
-package generator
+package config
 
 import (
 	"os"
-	"path"
 	"text/template"
 
 	"github.com/pkg/errors"
-	c "github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/internal"
 )
 
-func GenerateConfig(filename string) error {
-	if t, err := os.Open(filename); os.IsNotExist(err) {
-		f, err := internal.CreateFile(filename)
-		if err != nil {
-			return errors.Wrap(err, "Could not create config: "+filename)
-		}
+func (configFile *ConfigFile) Generate(configPath string) error {
 
-		lambdaTemplate.Execute(f, struct{}{})
-		f.Close()
-	} else {
-		t.Close()
+	f, err := internal.CreateFile(configPath)
+	if err != nil {
+		return errors.Wrap(err, "Could not create config: "+configPath)
 	}
+	defer f.Close()
+
+	configTemplate.Execute(f, struct {
+		Config *ConfigFile
+	}{
+		Config: configFile,
+	})
 	return nil
 }
 
-func GenerateWorkspace(config *c.Config) error {
-	if t, err := os.Open(config.Exec.Filename); os.IsNotExist(err) {
-		f, err := internal.CreateFile(config.Exec.Filename)
+func GenerateWorkspace(config *Config) error {
+
+	// Generate Executor Package
+	if t, err := os.Open(config.ConfigFile.DGraph.Resolver.Executer); os.IsNotExist(err) {
+		f, err := internal.CreateFile(config.ConfigFile.DGraph.Resolver.Executer)
 		if err != nil {
-			return errors.Wrap(err, "Could not create config: "+config.Exec.Filename)
+			return errors.Wrap(err, "Could not create config: "+config.ConfigFile.DGraph.Resolver.Executer)
 		}
-		template.Must(template.New("exec").Parse("package "+config.Exec.Package)).Execute(f, struct{}{})
+		template.Must(template.New("exec").Parse("package "+config.ConfigFile.DGraph.Resolver.Package)).Execute(f, struct{}{})
 		f.Close()
 	} else {
 		t.Close()
 	}
 
-	if t, err := os.Open(config.Model.Filename); os.IsNotExist(err) {
-		f, err := internal.CreateFile(config.Model.Filename)
+	// Generate Model Package
+	if t, err := os.Open(config.ConfigFile.DGraph.Model.Filename); os.IsNotExist(err) {
+		f, err := internal.CreateFile(config.ConfigFile.DGraph.Model.Filename)
 		if err != nil {
 			return err
 		}
-		template.Must(template.New("model").Parse("package "+config.Model.Package)).Execute(f, struct{}{})
+		template.Must(template.New("model").Parse("package "+config.ConfigFile.DGraph.Model.Package)).Execute(f, struct{}{})
 		f.Close()
 	} else {
 		t.Close()
 	}
 
-	if t, err := os.Open(config.Resolver.Dir); os.IsNotExist(err) {
+	// Generate Resolver Package
+	/*if t, err := os.Open(config.Resolver.Dir); os.IsNotExist(err) {
 		f, err := internal.CreateFile(config.Resolver.Dir)
 		if err != nil {
 			return err
@@ -56,10 +59,11 @@ func GenerateWorkspace(config *c.Config) error {
 		f.Close()
 	} else {
 		t.Close()
-	}
+	}*/
 
+	// We don't generate this as part of config
 	// Generate Resolver
-	if t, err := os.Open(path.Join(config.Resolver.Dir, "resolver.go")); os.IsNotExist(err) {
+	/*if t, err := os.Open(path.Join(config.Resolver.Dir, "resolver.go")); os.IsNotExist(err) {
 		f, err := internal.CreateFile(path.Join(config.Resolver.Dir, "resolver.go"))
 		if err != nil {
 			return err
@@ -77,7 +81,7 @@ func GenerateWorkspace(config *c.Config) error {
 
 	// TODO: If lang is WASM, then this should become a server that runs a wasm instance!
 	// We should probably split this one into gogen and wasm package as well
-	if config.Server.Mode != c.WASM_ONLY {
+	if config.Server.Mode != WASM_ONLY {
 		if t, err := os.Open("server.go"); os.IsNotExist(err) {
 			f, err := internal.CreateFile("server.go")
 			if err != nil {
@@ -89,7 +93,7 @@ func GenerateWorkspace(config *c.Config) error {
 				ResolverPackage  string
 				GeneratedPath    string
 				GeneratedPackage string
-				Mode             c.Mode
+				Mode             Mode
 			}{
 				ResolverPath:     path.Join(config.Root, config.Resolver.Dir),
 				ResolverPackage:  config.Resolver.Package,
@@ -105,37 +109,52 @@ func GenerateWorkspace(config *c.Config) error {
 		} else {
 			t.Close()
 		}
-	}
+	}*/
 	return nil
 }
 
-var resolverTemplate = template.Must(template.New("resolver").Parse(`package {{ .Package }}
+/*var resolverTemplate = template.Must(template.New("resolver").Parse(`package {{ .Package }}
 
 // Add objects to your desire
 type Resolver struct {
-}`))
+}`))*/
 
-var lambdaTemplate = template.Must(template.New("lambda").Parse(`schema:
-  - ./*.graphql
+var configTemplate = template.Must(template.New("config").Parse(`dgraph:
+  generator: {{ .Config.DGraph.Generator }}
+  schema:
+   {{- range $schema := .Config.DGraph.SchemaFileName}}
+   - {{ $schema }}
+   {{- end}}
+  model:
+    filename: {{ .Config.DGraph.Model.Filename }}
+    package: {{ .Config.DGraph.Model.Package }}
+    autobind:
+    {{- range $autobind := .Config.DGraph.Model.AutoBind}}
+     - {{ $autobind }}
+    {{- end}}
+    force:
+    {{- range $force := .Config.DGraph.Model.Force}}
+     - {{ $force }}
+    {{- end}}
 
-exec:
-  filename: lambda/generated/generated.go
-  package: generated
+  resolver:
+    executer: {{ .Config.DGraph.Resolver.Executer }}
+    dir: {{ .Config.DGraph.Resolver.Dir }}
+    package: {{ .Config.DGraph.Resolver.Package }}
+    filename_template: "{{ .Config.DGraph.Resolver.FilenameTemplate }}"
 
-model:
-  filename: lambda/model/models_gen.go
-  package: model
-
-autobind:
-  # - "github.com/schartey/dgraph-lambda-go/examples/models"
-
-resolver:
-  dir: lambda/resolvers
-  package: resolvers
-  filename_template: "{resolver}.resolver.go" # also allow "{name}.resolvers.go"
-
-server:
-  mode: server`))
+{{ if eq .Config.DGraph.Generator "wasm" }}
+wasm:
+  dir: {{ .Config.Wasm.Dir }}
+  language: {{ .Config.Wasm.Language }}
+{{ else }}
+native:
+  dir: {{ .Config.Native.Dir }}
+{{ end }}
+lambda:
+  generate: {{ .Config.Lambda.Generate }}
+  router: {{ .Config.Lambda.Router }}	
+`))
 
 var serverTemplate = template.Must(template.New("server").Parse(`package main
 

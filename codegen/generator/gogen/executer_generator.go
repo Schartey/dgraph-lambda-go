@@ -1,17 +1,6 @@
 package gogen
 
-import (
-	"go/types"
-	"os"
-	"path"
-	"text/template"
-
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
-)
-
+/*
 func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
 	f, err := os.Create(c.Exec.Filename)
 	if err != nil {
@@ -103,12 +92,12 @@ func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rew
 }
 
 var executerTemplate = template.Must(template.New("executer").Funcs(template.FuncMap{
-	"path":     generator.PkgPath,
-	"typeName": generator.TypeName,
-	"ref":      generator.ResolverRef,
-	"untitle":  generator.Untitle,
-	"args":     generator.Args,
-	"pointer":  generator.Pointer,
+	"path":     tools.PkgPath,
+	"typeName": tools.TypeName,
+	"ref":      tools.ResolverRef,
+	"untitle":  tools.Untitle,
+	"args":     tools.Args,
+	"pointer":  tools.Pointer,
 }).Parse(`
 package {{.PackageName}}
 
@@ -230,9 +219,9 @@ func (e Executer) resolveQuery(ctx context.Context, request *api.Request) (respo
          case "Query.{{$query.Name}}":
 	{
 		{{- range $arg := $query.Arguments }}
-		var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
+		var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }}
 		json.Unmarshal(request.Args["{{$arg.Name}}"], &{{$arg.Name}})
-		{{- end }}	
+		{{- end }}
 		result, err := e.queryResolver.Query_{{$query.Name}}(ctx{{ if ne (len $query.Arguments) 0}}, {{$query.Arguments | args}}{{end}}, request.AuthHeader)
 		if err != nil {
 			return nil, err
@@ -259,9 +248,9 @@ func (e Executer) resolveMutation(ctx context.Context, request *api.Request) (re
 		case "Mutation.{{$mutation.Name}}":
 			{
 				{{- range $arg := $mutation.Arguments }}
-				var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }} 
+				var {{ $arg.Name }} {{ pointer $arg.GoType $arg.IsArray }}
 				json.Unmarshal(request.Args["{{$arg.Name}}"], &{{$arg.Name}})
-				{{- end }}	
+				{{- end }}
 				result, err := e.mutationResolver.Mutation_{{$mutation.Name}}(ctx{{ if ne (len $mutation.Arguments) 0}}, {{$mutation.Arguments | args}}{{ end }}, request.AuthHeader)
 				if err != nil {
 					return nil, err
@@ -290,8 +279,9 @@ func (e Executer) resolveWebhook(ctx context.Context, request *api.Request) (err
 		return err
 		{{- end }}
 	}
-	
+
 	return &api.LambdaError{Underlying: errors.New("could not find webhook resolver"), Status: http.StatusNotFound}
 }
 
 `))
+*/

@@ -2,19 +2,16 @@ package gogen
 
 import (
 	"errors"
-	"go/types"
-	"os"
-	"path"
 	"text/template"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator/tools"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/schartey/dgraph-lambda-go/config"
 )
 
 func generateWebhook(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
-	if c.ResolverFilename == "resolver" {
+	/*if c.ResolverFilename == "resolver" {
 
 		fileName := path.Join(c.Resolver.Dir, "webhook.resolver.go")
 		f, err := os.Create(fileName)
@@ -54,15 +51,15 @@ func generateWebhook(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewr
 			return err
 		}
 		return nil
-	}
+	}*/
 	return errors.New("Resolver file pattern invalid")
 }
 
 var webhookResolverTemplate = template.Must(template.New("webhook-resolver").Funcs(template.FuncMap{
-	"path":     generator.PkgPath,
-	"body":     generator.MiddlewareBody,
-	"typeName": generator.TypeName,
-	"is":       generator.Is,
+	"path":     tools.PkgPath,
+	"body":     tools.MiddlewareBody,
+	"typeName": tools.TypeName,
+	"is":       tools.Is,
 }).Parse(`
 package {{.PackageName}}
 

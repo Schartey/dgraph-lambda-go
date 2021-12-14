@@ -1,23 +1,25 @@
 schema:
-  - ./examples/*.graphql
+  - ./wasm_examples/*.graphql
 
 exec:
-  filename: examples/lambda/generated/generated.go
+  filename: wasm_examples/lambda/generated/generated.go
   package: generated
 
 model:
-  filename: examples/lambda/model/models_gen.go
+  filename: wasm_examples/lambda/model/models_gen.go
   package: model
 
 autobind:
-  - "github.com/schartey/dgraph-lambda-go/examples/models"
+  - "github.com/schartey/dgraph-lambda-go/wasm_examples/models"
 
 resolver:
   layout: follow-schema
-  dir: examples/lambda/resolvers
+  dir: wasm_examples/lambda/resolvers
   package: resolvers
   filename_template: "{resolver}.resolver.go" # should also allow "{name}.resolvers.go"
 
+wasm:
+  language: go # go, rust, asc
+
 server:
-  mode: server
-  language: wasm
+  mode: wasm_only # wasm_only, server (if wasm language not defined, will generate a pure golang server)

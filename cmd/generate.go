@@ -1,13 +1,6 @@
 package cmd
 
 import (
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator/gogen"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator/wasm"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
-	"github.com/schartey/dgraph-lambda-go/internal"
 	"github.com/urfave/cli/v2"
 )
 
@@ -25,7 +18,7 @@ var generateCmd = &cli.Command{
 			configFile = "lambda.yaml"
 		}
 
-		moduleName, err := internal.GetModuleName()
+		/*moduleName, err := internal.GetModuleName()
 		if err != nil {
 			return err
 		}
@@ -34,7 +27,7 @@ var generateCmd = &cli.Command{
 		if err != nil {
 			return err
 		}
-		err = c.LoadConfig(configFile)
+		err = c.LoadConfig()
 		if err != nil {
 			return err
 		}
@@ -59,11 +52,15 @@ var generateCmd = &cli.Command{
 			return err
 		}
 
+		parsedTree, pkgs := generator.GetDefaultPackageTree(c.DefaultModelPackage.PkgPath, parsedTree)
+
 		var gen generator.Generator
-		if c.Server.Lang == config.WASM {
-			gen = wasm.NewGenerator(c, parsedTree, rewriter)
+
+		// If no language is selected, we generate a pure golang server
+		if c.Wasm.Lang == "" {
+			gen = gogen.NewGenerator(c, parsedTree, pkgs, rewriter)
 		} else {
-			gen = gogen.NewGenerator(c, parsedTree, rewriter)
+			gen = wasm.NewGenerator(c, parsedTree, pkgs, rewriter)
 		}
 		if err := gen.Generate(); err != nil {
 			return err
@@ -72,7 +69,7 @@ var generateCmd = &cli.Command{
 		// Run go mod tidy
 		if err := internal.FixImports(); err != nil {
 			return err
-		}
+		}*/
 
 		return nil
 	},

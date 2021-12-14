@@ -1,13 +1,8 @@
 package rewriter
 
 import (
-	"go/ast"
-	"path"
-	"strings"
-
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/internal"
+	"github.com/schartey/dgraph-lambda-go/config"
 )
 
 type Rewriter struct {
@@ -27,7 +22,7 @@ func (r *Rewriter) Load() error {
 	r.RewriteBodies = make(map[string]string)
 	r.DeprecatedBodies = make(map[string]string)
 
-	pkgs := &internal.Packages{}
+	/*pkgs := &internal.Packages{}
 	// field resolvers
 	if r.config.ResolverFilename == "resolver" {
 		pkg, err := pkgs.Load(path.Join(r.config.Root, r.config.Resolver.Dir))
@@ -106,6 +101,6 @@ func (r *Rewriter) Load() error {
 				}
 			}
 		}
-	}
+	}*/
 	return nil
 }

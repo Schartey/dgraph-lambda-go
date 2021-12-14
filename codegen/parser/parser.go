@@ -23,8 +23,9 @@ const (
 )
 
 type GoType struct {
-	Autobind bool
-	TypeName *types.TypeName
+	Autobind         bool
+	IsDefaultPackage bool
+	TypeName         *types.TypeName
 }
 
 type Scalar struct {
@@ -169,6 +170,7 @@ func (p *Parser) parseType(schemaType *ast.Definition, mustLambda bool) (*GoType
 
 	pkgPath, typeName, err := graphql.SchemaDefToGoDef(schemaType)
 	if err != nil {
+		// This should be a generated type
 		goType = &GoType{
 			TypeName: types.NewTypeName(0, nil, schemaType.Name, nil),
 		}

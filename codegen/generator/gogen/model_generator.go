@@ -3,87 +3,44 @@ package gogen
 import (
 	"fmt"
 	"go/types"
-	"os"
 	"text/template"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator/tools"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"golang.org/x/tools/go/packages"
+	"github.com/schartey/dgraph-lambda-go/config"
 )
 
-var defaultPackage *packages.Package
-
-func generateModel(c *config.Config, parsedTree *parser.Tree) error {
-
-	defaultPackage = c.DefaultModelPackage
-
-	f, err := os.Create(c.Model.Filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	var pkgs = make(map[string]*types.Package)
-	var models = make(map[string]*parser.Model)
-	var enums = make(map[string]*parser.Enum)
-	var interfaces = make(map[string]*parser.Interface)
-	var scalars = make(map[string]*parser.Scalar)
-
-	for _, m := range parsedTree.ModelTree.Models {
-		if m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
-			models[m.Name] = m
+func generateModel(c *config.Config, parsedTree *parser.Tree, pkgs map[string]*types.Package) error {
+	/*
+		f, err := os.Create(c.Model.Filename)
+		if err != nil {
+			return err
 		}
-		for _, f := range m.Fields {
-			if f.TypeName.Exported() && f.GoType.TypeName.Pkg().Path() != c.DefaultModelPackage.PkgPath {
-				pkgs[f.GoType.TypeName.Pkg().Name()] = f.GoType.TypeName.Pkg()
-			}
-		}
-	}
-	for _, m := range parsedTree.ModelTree.Enums {
-		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
-			enums[m.Name] = m
-		}
-	}
-	for _, m := range parsedTree.ModelTree.Interfaces {
-		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
-			interfaces[m.Name] = m
-		}
-	}
-	for _, m := range parsedTree.ModelTree.Scalars {
-		if m.TypeName.Exported() && m.GoType.TypeName.Pkg().Path() == c.DefaultModelPackage.PkgPath && !m.GoType.Autobind {
-			scalars[m.Name] = m
-		}
-	}
-	if len(enums) > 0 {
-		pkgs["fmt"] = types.NewPackage("fmt", "fmt")
-		pkgs["strconv"] = types.NewPackage("strconv", "strconv")
-		pkgs["io"] = types.NewPackage("io", "io")
-	}
+		defer f.Close()
 
-	err = modelTemplate.Execute(f, struct {
-		Interfaces  map[string]*parser.Interface
-		Enums       map[string]*parser.Enum
-		Scalars     map[string]*parser.Scalar
-		Models      map[string]*parser.Model
-		Packages    map[string]*types.Package
-		PackageName string
-	}{
-		Interfaces:  interfaces,
-		Enums:       enums,
-		Scalars:     parsedTree.ModelTree.Scalars,
-		Models:      models,
-		Packages:    pkgs,
-		PackageName: c.Model.Package,
-	})
-	if err != nil {
-		return err
-	}
+		err = modelTemplate.Execute(f, struct {
+			Interfaces  map[string]*parser.Interface
+			Enums       map[string]*parser.Enum
+			Scalars     map[string]*parser.Scalar
+			Models      map[string]*parser.Model
+			Packages    map[string]*types.Package
+			PackageName string
+		}{
+			Interfaces:  parsedTree.ModelTree.Interfaces,
+			Enums:       parsedTree.ModelTree.Enums,
+			Scalars:     parsedTree.ModelTree.Scalars,
+			Models:      parsedTree.ModelTree.Models,
+			Packages:    pkgs,
+			PackageName: c.Model.Package,
+		})
+		if err != nil {
+			return err
+		}*/
 	return nil
 }
 
 func modelRef(t *parser.GoType, isArray bool) string {
-	if t.TypeName.Exported() && t.TypeName.Pkg().Path() != defaultPackage.PkgPath {
+	if t.TypeName.Exported() && !t.IsDefaultPackage {
 		if isArray {
 			return fmt.Sprintf("[]*%s.%s", t.TypeName.Pkg().Name(), t.TypeName.Name())
 		} else {
@@ -106,8 +63,8 @@ func modelRef(t *parser.GoType, isArray bool) string {
 
 var modelTemplate = template.Must(template.New("model").Funcs(template.FuncMap{
 	"ref":   modelRef,
-	"path":  generator.PkgPath,
-	"title": generator.Title,
+	"path":  tools.PkgPath,
+	"title": tools.Title,
 }).Parse(`package {{.PackageName}}
 
 import(

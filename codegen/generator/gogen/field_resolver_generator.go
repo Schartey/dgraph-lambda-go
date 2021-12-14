@@ -1,18 +1,6 @@
 package gogen
 
-import (
-	"errors"
-	"go/types"
-	"os"
-	"path"
-	"text/template"
-
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
-)
-
+/*
 func generateFieldResolvers(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
 
 	if c.ResolverFilename == "resolver" {
@@ -67,13 +55,13 @@ func fieldResolverBody(key string, rewriter *rewriter.Rewriter) string {
 `
 	}
 }
-
-var fieldResolverTemplate = template.Must(template.New("field-resolver").Funcs(template.FuncMap{
+*/
+/*var fieldResolverTemplate = template.Must(template.New("field-resolver").Funcs(template.FuncMap{
 	"ref":     modelRef,
-	"path":    generator.PkgPath,
-	"pointer": generator.Pointer,
-	"body":    fieldResolverBody,
-	"is":      generator.Is,
+	"path":    tools.PkgPath,
+	"pointer": tools.Pointer,
+	//	"body":    fieldResolverBody,
+	"is": tools.Is,
 }).Parse(`
 package {{.PackageName}}
 
@@ -96,8 +84,9 @@ func (f *FieldResolver) {{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.N
 {{ end }}
 
 {{- range $key, $depBody := .Rewriter.DeprecatedBodies }}
-{{ if and (not (is $key "Query_")) (not (is $key "Mutation_")) (not (is $key "Middleware_")) }}
-/* {{ $depBody }} */
+{{ if and (not (is $key "Query_")) (not (is $key "Mutation_")) (not (is $key "Middleware_")) }}*/
+/* {{ $depBody }} */ /*
 {{ end }}
 {{ end }}
 `))
+*/

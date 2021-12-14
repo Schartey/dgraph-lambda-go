@@ -2,20 +2,16 @@ package gogen
 
 import (
 	"errors"
-	"fmt"
-	"go/types"
-	"os"
-	"path"
 	"text/template"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/generator"
+	"github.com/schartey/dgraph-lambda-go/codegen/generator/tools"
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/schartey/dgraph-lambda-go/config"
 )
 
 func generateMutationResolvers(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
-	if c.ResolverFilename == "resolver" {
+	/*if c.ResolverFilename == "resolver" {
 
 		fileName := path.Join(c.Resolver.Dir, "mutation.resolver.go")
 		f, err := os.Create(fileName)
@@ -57,17 +53,17 @@ func generateMutationResolvers(c *config.Config, parsedTree *parser.Tree, r *rew
 			return err
 		}
 		return nil
-	}
+	}*/
 	return errors.New("Resolver file pattern invalid")
 }
 
 var mutationResolverTemplate = template.Must(template.New("mutation-resolver").Funcs(template.FuncMap{
 	"ref":     returnRef,
-	"path":    generator.PkgPath,
-	"pointer": generator.Pointer,
-	"argsW":   generator.ArgsW,
-	"body":    generator.Body,
-	"is":      generator.Is,
+	"path":    tools.PkgPath,
+	"pointer": tools.Pointer,
+	"argsW":   tools.ArgsW,
+	"body":    tools.Body,
+	"is":      tools.Is,
 }).Parse(`
 package {{.PackageName}}
 
