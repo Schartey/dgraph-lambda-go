@@ -38,7 +38,7 @@ func ({{ untitle .Name }} *{{ .Name }}) Marshal() []byte {
 	}
 	return []byte(fmt.Sprintf(` + "`" + `{
 	{{- range $field := .Fields }}
-	"{{ $field.Name }}": {{ jsonRef $field.GoType }},
+	"{{ $field.Name }}": {{ jsonRef $field.GoType $field.IsArray }},
 	{{- end }}
 }` + "`" + `, 
 	{{- range $field := .Fields }}
@@ -104,108 +104,91 @@ func (e {{$enum.Name }}) MarshalGQL(w io.Writer) {
 }
 
 {{- end }}
-
-func MarshalTime(t *time.Time) string {
-	if t == nil {
-		return "null"
-	}
-	if v, err := t.MarshalJSON(); err != nil {
-		fmt.Println(err)
-		return "null"
-	} else {
-		return string(v)
-	}
-}
-
-func UnmarshalTime(data []byte) *time.Time {
-	if len(data) == 0 {
-		return nil
-	}
-	var t time.Time
-	if err := t.UnmarshalText(data); err != nil {
-		fmt.Println(err)
-		return nil
-	} else {
-		return &t
-	}
-}
-
 `))
 
-var GolangExecuterTemplate = template.Must(template.New("executer").Funcs(template.FuncMap{}).Parse(`package main
+var GolangFieldResolverTemplate = template.Must(template.New("field-resolver").Funcs(template.FuncMap{
+	"path":    tools.PkgPath,
+	"pointer": tools.Pointer,
+	"body":    tools.FieldResolverBody,
+	"is":      tools.Is,
+}).Parse(`
+package {{.PackageName}}
+
+import(
+	{{- range $pkg := .Packages }}
+	"{{ $pkg | path }}"{{- end}}
+)
+
+type FieldResolverInterface interface {
+{{- range $fieldResolver := .FieldResolvers}}
+	{{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(parents []{{ pointer $fieldResolver.Parent.GoType false }}, authHeader wasm.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, error){{ end }}
+}
+
+type FieldResolver struct {
+	*Resolver
+}
+
+{{- range $fieldResolver := .FieldResolvers}}
+func (f *FieldResolver) {{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}(parents []{{ pointer $fieldResolver.Parent.GoType false }}, authHeader wasm.AuthHeader) ([]{{ pointer $fieldResolver.Field.GoType $fieldResolver.Field.IsArray }}, error) { 
+{{- body (printf "%s_%s" $fieldResolver.Parent.Name $fieldResolver.Field.Name) $.Rewriter }}}
+{{ end }}
+
+{{- range $key, $depBody := .Rewriter.DeprecatedBodies }}
+{{ if and (not (is $key "Query_")) (not (is $key "Mutation_")) (not (is $key "Middleware_")) }}*/
+/* {{ $depBody }} */ /*
+{{ end }}
+{{ end }}
+`))
+
+var GolangExecuterTemplate = template.Must(template.New("executer").Funcs(template.FuncMap{
+	"pointer":    tools.Pointer,
+	"marshal":    tools.Marshal,
+	"jsonRefVal": tools.JsonRefVal,
+}).Parse(`package generated
 
 import (
-	"unsafe"
-
-	"github.com/schartey/dgraph-lambda-go/api"
 	"github.com/schartey/dgraph-lambda-go/wasm"
 	"github.com/valyala/fastjson"
 )
 
-/** This is the buffer that the host needs to write parameters into and read results from that are not int and float **/
-var buf [2048]byte
-
-//export getBuffer
-func getBuffer() *byte {
-	return &buf[0]
+type Executor struct {
+	fieldResolver *resolvers.FieldResolver
 }
 
-var resBuf [2048]byte
-
-//export getResult
-func getResult() *byte {
-	return &resBuf[0]
+func NewExecutor(resolver *resolvers.Resolver) *Executor {
+	return &Executor{&resolvers.FieldResolver{Resolver: resolver}}
 }
 
-// This is called on startup
-func main() { 
-	// resolver.start()
-}
-
-/** Run resolver - This should be generated **/
-//export execute
-func execute(ptr *byte, length int, res *byte) int {
-	requestBuffer := buf[:length]
-
-	request, err := unmarshalRequest(requestBuffer)
-	if err != nil {
-		wasm.Log(err.Error())
+func (e *Executor) Resolve(request *wasm.Request) ([]byte, error) {
+	switch request.Resolver {
+	default:
+		return e.resolveField(request)
 	}
-	
-	// Generate all resolvers
-	return 0
-}
-
-func unmarshalRequest(requestBuffer [] byte) (*api.Request, error) {
-	t := api.Request{}
-
-	var p fastjson.Parser
-	v, err := p.Parse(string(requestBuffer))
-	if err != nil {
-		return nil, err
-	}
-	t.AccessToken = string(v.GetStringBytes("X-Dgraph-AccessToken"))
-	t.Args = make(map[string][]byte)
-	t.Args["name"] = v.Get("args").GetStringBytes("name")
-
-	t.AuthHeader = api.AuthHeader{
-		Key:   string(v.Get("authHeader").GetStringBytes("key")),
-		Value: string(v.Get("authHeader").GetStringBytes("value")),
-	}
-
-	t.Event = &api.Event{}
-
-	t.Info = api.InfoField{}
-	t.Info.Field.Alias = string(v.Get("info").Get("field").GetStringBytes("alias"))
-	t.Info.Field.Name = string(v.Get("info").Get("field").GetStringBytes("name"))
-	t.Info.Field.Arguments = v.Get("info").Get("field").GetStringBytes("arguments")
-	t.Info.Field.Directives = []api.Directive{}
-	t.Info.Field.SelectionSet = []api.SelectionField{}
-
-	t.Parents = v.GetStringBytes("parents")
-
-	t.Resolver = string(v.GetStringBytes("resolver"))
-
 	return nil, nil
 }
+
+func (e *Executor) resolveField(request *wasm.Request) ([]byte, error) {
+	switch request.Resolver {
+		{{- range $fieldResolver := .FieldResolvers}}
+		case "{{$fieldResolver.Parent.Name }}.{{$fieldResolver.Field.Name}}":
+			{
+				var parents []{{ pointer $fieldResolver.Parent.GoType false }}
+				
+				for _, e := range request.Parents {
+					parents = append(parents, model.Unmarshal{{$fieldResolver.Parent.Name }}(e))
+				}
+
+				result, err := e.fieldResolver.{{$fieldResolver.Parent.Name }}_{{$fieldResolver.Field.Name}}( parents, request.AuthHeader)
+				if err != nil {
+					return nil, err
+				}
+				// Marshal result...
+				return {{ marshal $fieldResolver.Field.GoType true }}, nil
+			}
+		{{- end }}
+	}
+
+	return nil, errors.New("resolver not found")
+}
+
 `))

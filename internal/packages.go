@@ -24,6 +24,8 @@ type Packages struct {
 }
 
 func (p *Packages) Load(importPath string) (*packages.Package, error) {
+	fmt.Println("load")
+	fmt.Println(importPath)
 	if p.packages == nil {
 		p.packages = map[string]*packages.Package{}
 	}

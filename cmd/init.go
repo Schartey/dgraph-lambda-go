@@ -10,6 +10,7 @@ import (
 	"github.com/schartey/dgraph-lambda-go/codegen/generator/gogen"
 	"github.com/schartey/dgraph-lambda-go/codegen/generator/wasm"
 	"github.com/schartey/dgraph-lambda-go/config"
+	"github.com/schartey/dgraph-lambda-go/internal"
 	"github.com/urfave/cli/v2"
 )
 
@@ -62,8 +63,7 @@ var initCmd = &cli.Command{
 			configFilePath = "lambda.yaml"
 		}
 
-		if t, err := os.Open(configFilePath); err == nil {
-			t.Close()
+		if _, err := os.Stat(configFilePath); os.IsExist(err) {
 			overwrite := false
 			survey.AskOne(&survey.Confirm{
 				Message: "Config already exists. Overwrite?",
@@ -135,7 +135,10 @@ var initCmd = &cli.Command{
 			return err
 		}
 
-		fmt.Println(c)
+		if err := internal.FixImports(); err != nil {
+			return err
+		}
+
 		return nil
 	},
 }

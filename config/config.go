@@ -10,7 +10,6 @@ import (
 	"github.com/schartey/dgraph-lambda-go/internal"
 	"github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
-	"golang.org/x/tools/go/packages"
 	"gopkg.in/yaml.v2"
 )
 
@@ -78,13 +77,11 @@ type ConfigFile struct {
 }
 
 type Config struct {
-	ConfigFile          *ConfigFile
-	ConfigPath          string
-	Packages            *internal.Packages
-	Schema              *ast.Schema
-	Root                string
-	DefaultModelPackage *packages.Package
-	ResolverFilename    ResolverTemplate
+	ConfigFile       *ConfigFile
+	ConfigPath       string
+	Schema           *ast.Schema
+	Root             string
+	ResolverFilename ResolverTemplate
 }
 
 var DefaultConfigFile = &ConfigFile{
@@ -99,7 +96,7 @@ var DefaultConfigFile = &ConfigFile{
 		},
 		Resolver: Resolver{
 			Executer:         "generated/executer.go",
-			Dir:              "resolvers",
+			Dir:              "generated/resolvers",
 			Package:          "resolvers",
 			FilenameTemplate: "{resolver}.resolver.go",
 		},
@@ -250,103 +247,3 @@ func loadSources(configPath string, schemaFilename []string) ([]*ast.Source, err
 	}
 	return sources, nil
 }
-
-/*func (c *Config) Bind(parsedTree *parser.Tree) error {
-
-	if len(c.AutoBind) == 0 {
-		for _, it := range parsedTree.ModelTree.Models {
-			c.bindPackage(nil, it.GoType, it.Name)
-		}
-
-		for _, it := range parsedTree.ModelTree.Interfaces {
-			c.bindPackage(nil, it.GoType, it.Name)
-		}
-
-		for _, it := range parsedTree.ModelTree.Enums {
-			c.bindPackage(nil, it.GoType, it.Name)
-		}
-
-		for _, it := range parsedTree.ModelTree.Scalars {
-			c.bindPackage(nil, it.GoType, it.Name)
-		}
-	}
-
-	for _, autobind := range c.AutoBind {
-		var pkg *packages.Package
-		pkg, err := c.Packages.PackageFromPath(autobind)
-		if err != nil {
-			pkg, err = c.Packages.Load(autobind)
-			if err != nil {
-				return errors.Wrap(err, "Could not load package")
-			}
-		}
-
-		for _, it := range parsedTree.ModelTree.Models {
-			if it.GoType.TypeName.Exported() {
-				if it.GoType.TypeName.Pkg() == nil {
-					c.bindPackage(pkg, it.GoType, it.Name)
-				}
-			}
-		}
-
-		for _, it := range parsedTree.ModelTree.Interfaces {
-			if it.GoType.TypeName.Exported() {
-				if it.GoType.TypeName.Pkg() == nil {
-					c.bindPackage(pkg, it.GoType, it.Name)
-				}
-			}
-		}
-
-		for _, it := range parsedTree.ModelTree.Enums {
-			if it.GoType.TypeName.Exported() {
-				if it.GoType.TypeName.Pkg() == nil {
-					c.bindPackage(pkg, it.GoType, it.Name)
-				}
-			}
-		}
-
-		for _, it := range parsedTree.ModelTree.Scalars {
-			if it.GoType.TypeName.Exported() {
-				if it.GoType.TypeName.Pkg() == nil {
-					c.bindPackage(pkg, it.GoType, it.Name)
-				}
-			}
-		}
-	}
-
-	return nil
-}
-
-func (c *Config) pkgHasType(pkg *packages.Package, name string) bool {
-	for _, typeName := range pkg.Types.Scope().Names() {
-		if name == typeName {
-			return true
-		}
-	}
-	return false
-}
-
-func (c *Config) isCustomInDefaultPkg(pkg *packages.Package, name string) bool {
-	if fileName, err := c.Packages.GetFileNameType(pkg.PkgPath, name); err == nil && !strings.Contains(fileName, c.Model.Filename) {
-		return true
-	}
-	return false
-}
-
-func (c *Config) bindPackage(pkg *packages.Package, t *parser.GoType, name string) {
-	if t.TypeName.Exported() {
-		if c.isCustomInDefaultPkg(c.DefaultModelPackage, name) {
-			t.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), name, nil)
-			t.Autobind = true
-			t.IsDefaultPackage = true
-		} else if pkg != nil && pkg.PkgPath != c.DefaultModelPackage.PkgPath && c.pkgHasType(pkg, name) {
-			t.TypeName = types.NewTypeName(0, types.NewPackage(pkg.PkgPath, pkg.Name), name, nil)
-			t.Autobind = true
-			t.IsDefaultPackage = false
-			fmt.Printf("Autobind: %s -> %s\n", name, t.TypeName.Pkg().Name())
-		} else {
-			t.TypeName = types.NewTypeName(0, types.NewPackage(c.DefaultModelPackage.PkgPath, c.DefaultModelPackage.Name), name, nil)
-			t.IsDefaultPackage = true
-		}
-	}
-}*/

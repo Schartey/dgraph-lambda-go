@@ -47,9 +47,12 @@ func ModelRef(t *parser.GoType, isArray bool) string {
 	}
 }
 
-func JsonRef(t *parser.GoType) string {
+func JsonRef(t *parser.GoType, isArray bool) string {
 	switch t.TypeName.Name() {
 	case "string":
+		if isArray {
+			return "%s"
+		}
 		return "\"%s\""
 	case "float64":
 		return "%f"
@@ -65,7 +68,7 @@ func JsonRefVal(field *parser.Field, model *parser.GoType) string {
 	} else {
 		// TODO: Support other standard types
 		if field.TypeName.Name() == "Time" {
-			return fmt.Sprintf("MarshalTime(%s.%s)", Untitle(model.TypeName.Name()), Title(field.Name))
+			return fmt.Sprintf("wasm.MarshalTime(%s.%s)", Untitle(model.TypeName.Name()), Title(field.Name))
 		} else {
 			return fmt.Sprintf("%s.%s.Marshal()", Untitle(model.TypeName.Name()), field.TypeName.Name())
 		}
@@ -76,6 +79,9 @@ func JsonVal(field *parser.Field) string {
 	if !field.TypeName.Exported() {
 		switch field.TypeName.Name() {
 		case "string":
+			if field.IsArray {
+				return fmt.Sprintf("wasm.UnmarshalStringArray(v.Get(\"%s\"))", Untitle(field.Name))
+			}
 			return fmt.Sprintf("string(v.GetStringBytes(\"%s\"))", Untitle(field.Name))
 		case "float64":
 			return fmt.Sprintf("v.GetFloat64(\"%s\")", Untitle(field.Name))
@@ -86,11 +92,32 @@ func JsonVal(field *parser.Field) string {
 	} else {
 		// TODO: Support other standard types
 		if field.TypeName.Name() == "Time" {
-			return fmt.Sprintf("UnmarshalTime(v.GetStringBytes(\"%s\"))", Untitle(field.Name))
+			return fmt.Sprintf("wasm.UnmarshalTime(v.GetStringBytes(\"%s\"))", Untitle(field.Name))
 		} else {
 			return fmt.Sprintf("Unmarshal%s(v.Get(\"%s\"))", Title(field.Name), Untitle(field.Name))
 		}
 	}
+}
+
+func Marshal(t *parser.GoType, isArray bool) string {
+	if !t.TypeName.Exported() {
+		switch t.TypeName.Name() {
+		case "string":
+			if isArray {
+				return "wasm.MarshalStringArray(result)"
+			}
+			return "[]byte(result)"
+		}
+		return "nil"
+	} else {
+		// TODO: Support other standard types
+
+		return fmt.Sprintf("Unmarshal%s()", Title(t.TypeName.Name()))
+	}
+}
+
+func Unmarshal(t *parser.GoType, isArray bool) string {
+	return ""
 }
 
 func PkgPath(t *types.Package) string {
@@ -162,6 +189,16 @@ func Body(t *parser.GoType, isArray bool, key string, rewriter *rewriter.Rewrite
 		return fmt.Sprintf(`
 	return %s, nil
 `, ReturnValue(t, isArray))
+	}
+}
+
+func FieldResolverBody(key string, rewriter *rewriter.Rewriter) string {
+	if val, ok := rewriter.RewriteBodies[key]; ok {
+		return val
+	} else {
+		return `
+	return nil, nil
+`
 	}
 }
 

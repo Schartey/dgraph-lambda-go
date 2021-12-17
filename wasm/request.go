@@ -1,7 +1,9 @@
-package api
+package wasm
 
 import (
 	"context"
+
+	"github.com/valyala/fastjson"
 )
 
 type AuthHeader struct {
@@ -28,11 +30,11 @@ type InfoField struct {
 
 type Request struct {
 	AccessToken string            `json:"X-Dgraph-AccessToken"`
-	Args        map[string][]byte `json:"args"`
+	Args        []*fastjson.Value `json:"args"`
 	Info        InfoField         `json:"info"`
 	AuthHeader  AuthHeader        `json:"authHeader"`
 	Resolver    string            `json:"resolver"`
-	Parents     []byte            `json:"parents"`
+	Parents     []*fastjson.Value `json:"parents"`
 	Event       *Event            `json:"event"`
 }
 

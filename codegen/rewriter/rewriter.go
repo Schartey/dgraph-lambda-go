@@ -1,31 +1,37 @@
 package rewriter
 
 import (
+	"go/ast"
+	"path"
+	"strings"
+
 	"github.com/schartey/dgraph-lambda-go/codegen/parser"
 	"github.com/schartey/dgraph-lambda-go/config"
+	"github.com/schartey/dgraph-lambda-go/internal"
 )
 
 type Rewriter struct {
 	config           *config.Config
+	packages         *internal.Packages
 	parsedTree       *parser.Tree
 	RewriteBodies    map[string]string
 	DeprecatedBodies map[string]string
 }
 
-func New(config *config.Config, parsedTree *parser.Tree) *Rewriter {
+func New(config *config.Config, packages *internal.Packages, parsedTree *parser.Tree) *Rewriter {
 	rewriteBodies := make(map[string]string)
 	deprecatedBodies := make(map[string]string)
-	return &Rewriter{config: config, parsedTree: parsedTree, RewriteBodies: rewriteBodies, DeprecatedBodies: deprecatedBodies}
+	return &Rewriter{config: config, packages: packages, parsedTree: parsedTree, RewriteBodies: rewriteBodies, DeprecatedBodies: deprecatedBodies}
 }
 
 func (r *Rewriter) Load() error {
 	r.RewriteBodies = make(map[string]string)
 	r.DeprecatedBodies = make(map[string]string)
 
-	/*pkgs := &internal.Packages{}
+	pkgs := &internal.Packages{}
 	// field resolvers
 	if r.config.ResolverFilename == "resolver" {
-		pkg, err := pkgs.Load(path.Join(r.config.Root, r.config.Resolver.Dir))
+		pkg, err := pkgs.Load(path.Join(r.config.Root, r.config.ConfigFile.DGraph.Resolver.Dir))
 		if err != nil {
 			return err
 		}
@@ -43,7 +49,7 @@ func (r *Rewriter) Load() error {
 
 					for _, query := range r.parsedTree.ResolverTree.Queries {
 						if query.Name == queryName {
-							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -55,7 +61,7 @@ func (r *Rewriter) Load() error {
 
 					for _, mutation := range r.parsedTree.ResolverTree.Mutations {
 						if mutation.Name == mutationName {
-							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -67,7 +73,7 @@ func (r *Rewriter) Load() error {
 
 					for _, middleware := range r.parsedTree.Middleware {
 						if middleware == middlewareName {
-							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -79,7 +85,7 @@ func (r *Rewriter) Load() error {
 
 					for _, model := range r.parsedTree.ModelTree.Models {
 						if model.TypeName.Name() == webhookName {
-							_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+							_, r.RewriteBodies[d.Name.Name] = r.packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 							found = true
 							break
 						}
@@ -90,17 +96,17 @@ func (r *Rewriter) Load() error {
 					splitName := strings.Split(d.Name.Name, "_")
 
 					if splitName[0] == fieldResolver.Parent.Name && splitName[1] == fieldResolver.Field.Name {
-						_, r.RewriteBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
+						_, r.RewriteBodies[d.Name.Name] = r.packages.GetSource(pkg, d.Body.Pos()+1, d.Body.End()-1)
 						found = true
 						break
 					}
 				}
 
 				if !found {
-					_, r.DeprecatedBodies[d.Name.Name] = r.config.Packages.GetSource(pkg, d.Pos(), d.End())
+					_, r.DeprecatedBodies[d.Name.Name] = r.packages.GetSource(pkg, d.Pos(), d.End())
 				}
 			}
 		}
-	}*/
+	}
 	return nil
 }
