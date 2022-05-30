@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	"github.com/pkg/errors"
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
+	"github.com/miko/dgraph-lambda-go/codegen/config"
 )
 
 func GenerateConfig(filename string) error {
@@ -119,7 +119,7 @@ model:
   package: model
 
 autobind:
-  # - "github.com/schartey/dgraph-lambda-go/examples/models"
+  # - "github.com/miko/dgraph-lambda-go/examples/models"
 
 resolver:
   dir: lambda/resolvers
@@ -146,7 +146,7 @@ import (
 	"github.com/go-chi/chi"
 	{{ end }}
 
-	"github.com/schartey/dgraph-lambda-go/api"
+	"github.com/miko/dgraph-lambda-go/api"
 	"{{ .GeneratedPath }}"
 	"{{ .ResolverPath }}"
 )

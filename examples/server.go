@@ -10,9 +10,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi"
-	"github.com/schartey/dgraph-lambda-go/api"
-	"github.com/schartey/dgraph-lambda-go/examples/lambda/generated"
-	"github.com/schartey/dgraph-lambda-go/examples/lambda/resolvers"
+	"github.com/miko/dgraph-lambda-go/api"
+	"github.com/miko/dgraph-lambda-go/examples/lambda/generated"
+	"github.com/miko/dgraph-lambda-go/examples/lambda/resolvers"
 )
 
 func RunWithServer() {

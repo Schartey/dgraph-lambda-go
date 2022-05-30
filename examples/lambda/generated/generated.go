@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/schartey/dgraph-lambda-go/api"
-	"github.com/schartey/dgraph-lambda-go/examples/lambda/model"
-	"github.com/schartey/dgraph-lambda-go/examples/lambda/resolvers"
+	"github.com/miko/dgraph-lambda-go/api"
+	"github.com/miko/dgraph-lambda-go/examples/lambda/model"
+	"github.com/miko/dgraph-lambda-go/examples/lambda/resolvers"
 )
 
 type Executer struct {

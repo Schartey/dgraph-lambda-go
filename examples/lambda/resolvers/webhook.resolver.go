@@ -3,7 +3,7 @@ package resolvers
 import (
 	"context"
 
-	"github.com/schartey/dgraph-lambda-go/api"
+	"github.com/miko/dgraph-lambda-go/api"
 )
 
 type WebhookResolverInterface interface {

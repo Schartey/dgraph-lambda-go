@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/schartey/dgraph-lambda-go/examples/models"
+	"github.com/miko/dgraph-lambda-go/examples/models"
 	"github.com/twpayne/go-geom"
 )
 

@@ -9,7 +9,7 @@ model:
   package: model
 
 autobind:
-  - "github.com/schartey/dgraph-lambda-go/examples/models"
+  - "github.com/miko/dgraph-lambda-go/examples/models"
 
 resolver:
   layout: follow-schema

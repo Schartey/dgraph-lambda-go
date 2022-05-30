@@ -8,9 +8,9 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/miko/dgraph-lambda-go/codegen/config"
+	"github.com/miko/dgraph-lambda-go/codegen/parser"
+	"github.com/miko/dgraph-lambda-go/codegen/rewriter"
 )
 
 func generateQueryResolvers(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
@@ -39,7 +39,7 @@ func generateQueryResolvers(c *config.Config, parsedTree *parser.Tree, r *rewrit
 		}
 		if len(parsedTree.ResolverTree.Queries) > 0 {
 			pkgs["context"] = types.NewPackage("context", "context")
-			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
+			pkgs["api"] = types.NewPackage("github.com/miko/dgraph-lambda-go/api", "api")
 		}
 
 		err = queryResolverTemplate.Execute(f, struct {

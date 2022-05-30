@@ -1,4 +1,4 @@
-module github.com/schartey/dgraph-lambda-go
+module github.com/miko/dgraph-lambda-go
 
 go 1.16
 
@@ -17,7 +17,7 @@ require (
 	golang.org/x/mod v0.5.1
 	golang.org/x/net v0.0.0-20211108170745-6635138e15ea // indirect
 	golang.org/x/sys v0.0.0-20211107104306-e0b2ad06fe42 // indirect
-	golang.org/x/tools v0.1.7
+	golang.org/x/tools v0.1.8
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 )

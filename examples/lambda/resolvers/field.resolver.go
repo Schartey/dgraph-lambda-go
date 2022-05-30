@@ -3,8 +3,8 @@ package resolvers
 import (
 	"context"
 
-	"github.com/schartey/dgraph-lambda-go/api"
-	"github.com/schartey/dgraph-lambda-go/examples/lambda/model"
+	"github.com/miko/dgraph-lambda-go/api"
+	"github.com/miko/dgraph-lambda-go/examples/lambda/model"
 )
 
 type FieldResolverInterface interface {
