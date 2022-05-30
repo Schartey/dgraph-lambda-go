@@ -6,11 +6,11 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/pkg/errors"
 	"github.com/miko/dgraph-lambda-go/codegen/config"
 	"github.com/miko/dgraph-lambda-go/codegen/graphql"
 	"github.com/miko/dgraph-lambda-go/codegen/parser"
 	"github.com/miko/dgraph-lambda-go/codegen/rewriter"
+	"github.com/pkg/errors"
 )
 
 func Generate(c *config.Config, p *parser.Tree, r *rewriter.Rewriter) error {
@@ -96,10 +96,18 @@ func args(args []*parser.Argument) string {
 	return strings.Join(arglist, ",")
 }
 
+//Replace reserved words which could cause go compiler to fail
+var ReservedMap map[string]string = map[string]string{
+	"type": "xtype",
+}
+
 func argsW(args []*parser.Argument) string {
 	var arglist []string
 
 	for _, arg := range args {
+		if replaced, exists := ReservedMap[arg.Name]; exists {
+			arg.Name = replaced
+		}
 		arglist = append(arglist, fmt.Sprintf("%s %s", arg.Name, pointer(arg.GoType, arg.IsArray)))
 	}
 	return strings.Join(arglist, ",")
