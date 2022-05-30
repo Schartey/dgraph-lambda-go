@@ -6,12 +6,12 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/internal"
+	"github.com/miko/dgraph-lambda-go/codegen/parser"
+	"github.com/miko/dgraph-lambda-go/internal"
 	"github.com/stretchr/testify/assert"
 )
 
-var autobindValues = []string{"github.com/schartey/dgraph-lambda-go/examples/models"}
+var autobindValues = []string{"github.com/miko/dgraph-lambda-go/examples/models"}
 var models = []string{"User", "Author", "Apple", "Figure", "Hotel"}
 var fieldResolvers = []string{"User.reputation", "User.rank", "User.active", "Post.additionalInfo", "Figure.size"}
 
@@ -22,7 +22,7 @@ var mutationResolvers = []string{"newAuthor"}
 var middlewareResolvers = []string{"user", "admin"}
 
 func Test_LoadConfig(t *testing.T) {
-	config, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	config, err := LoadConfigFile("github.com/miko/dgraph-lambda-go", "../../lambda.yaml")
 	assert.NoError(t, err)
 	err = config.LoadConfig("../../lambda.yaml")
 	assert.NoError(t, err)
@@ -32,38 +32,38 @@ func Test_LoadConfig(t *testing.T) {
 	assert.Equal(t, "generated", config.Exec.Package)
 	assert.Equal(t, "examples/lambda/model/models_gen.go", config.Model.Filename)
 	assert.Equal(t, "model", config.Model.Package)
-	assert.Equal(t, "github.com/schartey/dgraph-lambda-go/examples/models", config.AutoBind[0])
+	assert.Equal(t, "github.com/miko/dgraph-lambda-go/examples/models", config.AutoBind[0])
 	assert.Equal(t, "follow-schema", config.Resolver.Layout)
 	assert.Equal(t, "examples/lambda/resolvers", config.Resolver.Dir)
 	assert.Equal(t, "resolvers", config.Resolver.Package)
 	assert.Equal(t, "{resolver}.resolver.go", config.Resolver.FilenameTemplate)
 	assert.Equal(t, true, config.Server.Standalone)
-	assert.Equal(t, "github.com/schartey/dgraph-lambda-go", config.Root)
+	assert.Equal(t, "github.com/miko/dgraph-lambda-go", config.Root)
 	assert.NotNil(t, config.DefaultModelPackage)
 	assert.Equal(t, "model", config.DefaultModelPackage.Name)
-	assert.Equal(t, "github.com/schartey/dgraph-lambda-go/examples/lambda/model", config.DefaultModelPackage.PkgPath)
+	assert.Equal(t, "github.com/miko/dgraph-lambda-go/examples/lambda/model", config.DefaultModelPackage.PkgPath)
 	assert.Equal(t, 3, len(config.Sources))
 	assert.Contains(t, config.Sources[2].Name, "dgraph-lambda-go/examples/test.graphql")
 }
 
 func Test_LoadConfig_Fail(t *testing.T) {
 	// Non existent file
-	_, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "./lambda.yaml")
+	_, err := LoadConfigFile("github.com/miko/dgraph-lambda-go", "./lambda.yaml")
 	assert.Error(t, err)
 
 	// Invalid file type
-	_, err = LoadConfigFile("github.com/schartey/dgraph-lambda-go", "./config.go")
+	_, err = LoadConfigFile("github.com/miko/dgraph-lambda-go", "./config.go")
 	assert.Error(t, err)
 
 	for i := 1; i < 6; i++ {
 		// Invalid file type
-		_, err = LoadConfigFile("github.com/schartey/dgraph-lambda-go", fmt.Sprintf("../../test_resources/faulty%d.yaml", i))
+		_, err = LoadConfigFile("github.com/miko/dgraph-lambda-go", fmt.Sprintf("../../test_resources/faulty%d.yaml", i))
 		assert.Error(t, err)
 	}
 }
 
 func Test_loadSchema(t *testing.T) {
-	config, err := LoadConfigFile("github.com/schartey/dgraph-lambda-go", "../../lambda.yaml")
+	config, err := LoadConfigFile("github.com/miko/dgraph-lambda-go", "../../lambda.yaml")
 	assert.NoError(t, err)
 	err = config.LoadConfig("../../lambda.yaml")
 	assert.NoError(t, err)

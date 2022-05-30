@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/schartey/dgraph-lambda-go/examples"
+	"github.com/miko/dgraph-lambda-go/examples"
 	"github.com/urfave/cli/v2"
 )
 

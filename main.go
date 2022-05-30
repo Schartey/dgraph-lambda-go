@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/schartey/dgraph-lambda-go/cmd"
+	"github.com/miko/dgraph-lambda-go/cmd"
 )
 
 func main() {

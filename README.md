@@ -1,5 +1,7 @@
 # dgraph-lambda-go
 
+*Note: this is a fork, for the original project by Schartey go to https://github.com/Schartey/dgraph-lambda-go*
+
 Go Library written to build Dgraph Lambda servers as an alternative to the [Dgraph JS Lambda Server](https://github.com/dgraph-io/dgraph-lambda)
 
 It is currently in **development**! Please create an issue if something is not working correctly.
@@ -9,10 +11,10 @@ If you would like to support me please visit my [:coffee:](https://ko-fi.com/sch
 ## Getting started
 
 - Create project ```go mod init```
-- To install dgraph-lambda-go run the command ```go get -d github.com/schartey/dgraph-lambda-go``` in your project directory.
-- Then initialize the project by running ```go run github.com/schartey/dgraph-lambda-go init```.
+- To install dgraph-lambda-go run the command ```go get -d github.com/miko/dgraph-lambda-go``` in your project directory.
+- Then initialize the project by running ```go run github.com/miko/dgraph-lambda-go init```.
 - Set path to your graphql schema in lambda.yaml
-- Generate types and resolvers ```go run github.com/schartey/dgraph-lambda-go generate```
+- Generate types and resolvers ```go run github.com/miko/dgraph-lambda-go generate```
 - Implement your lambda resolvers
 - Run your server ```go run server.go```
 
@@ -36,7 +38,7 @@ When first initializing the lambda server it will generate a basic lambda.yaml f
       - "Home"
 
     autobind:
-      - "github.com/schartey/dgraph-lambda-go/examples/models"
+      - "github.com/miko/dgraph-lambda-go/examples/models"
 
     resolver:
       dir: lambda/resolvers
