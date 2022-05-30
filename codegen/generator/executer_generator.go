@@ -6,9 +6,9 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/miko/dgraph-lambda-go/codegen/config"
+	"github.com/miko/dgraph-lambda-go/codegen/parser"
+	"github.com/miko/dgraph-lambda-go/codegen/rewriter"
 )
 
 func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
@@ -64,7 +64,7 @@ func generateExecuter(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rew
 	pkgs["errors"] = types.NewPackage("errors", "errors")
 	pkgs["http"] = types.NewPackage("net/http", "http")
 	pkgs["strings"] = types.NewPackage("strings", "strings")
-	pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
+	pkgs["api"] = types.NewPackage("github.com/miko/dgraph-lambda-go/api", "api")
 
 	if len(parsedTree.ResolverTree.FieldResolvers) > 0 ||
 		len(parsedTree.ResolverTree.Queries) > 0 ||

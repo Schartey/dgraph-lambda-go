@@ -7,9 +7,9 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/miko/dgraph-lambda-go/codegen/config"
+	"github.com/miko/dgraph-lambda-go/codegen/parser"
+	"github.com/miko/dgraph-lambda-go/codegen/rewriter"
 )
 
 func generateWebhook(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
@@ -35,7 +35,7 @@ func generateWebhook(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewr
 
 		if len(models) > 0 {
 			pkgs["context"] = types.NewPackage("context", "context")
-			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
+			pkgs["api"] = types.NewPackage("github.com/miko/dgraph-lambda-go/api", "api")
 		}
 
 		err = webhookResolverTemplate.Execute(f, struct {

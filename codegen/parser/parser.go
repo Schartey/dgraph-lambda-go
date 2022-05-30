@@ -7,8 +7,8 @@ import (
 	"go/types"
 	"regexp"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/graphql"
-	"github.com/schartey/dgraph-lambda-go/internal"
+	"github.com/miko/dgraph-lambda-go/codegen/graphql"
+	"github.com/miko/dgraph-lambda-go/internal"
 	"github.com/vektah/gqlparser/v2/ast"
 )
 

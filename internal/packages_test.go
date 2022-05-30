@@ -9,12 +9,12 @@ import (
 func Test_Packages(t *testing.T) {
 	packages := &Packages{}
 
-	pkg, err := packages.Load("github.com/schartey/dgraph-lambda-go/internal")
+	pkg, err := packages.Load("github.com/miko/dgraph-lambda-go/internal")
 	assert.NoError(t, err)
 	assert.Equal(t, "internal", pkg.Name)
-	assert.Equal(t, "github.com/schartey/dgraph-lambda-go/internal", pkg.PkgPath)
+	assert.Equal(t, "github.com/miko/dgraph-lambda-go/internal", pkg.PkgPath)
 
-	cached, err := packages.PackageFromPath("github.com/schartey/dgraph-lambda-go/internal")
+	cached, err := packages.PackageFromPath("github.com/miko/dgraph-lambda-go/internal")
 	assert.NoError(t, err)
 	assert.Equal(t, pkg, cached)
 }

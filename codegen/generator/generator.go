@@ -7,10 +7,10 @@ import (
 	"unicode"
 
 	"github.com/pkg/errors"
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/graphql"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/miko/dgraph-lambda-go/codegen/config"
+	"github.com/miko/dgraph-lambda-go/codegen/graphql"
+	"github.com/miko/dgraph-lambda-go/codegen/parser"
+	"github.com/miko/dgraph-lambda-go/codegen/rewriter"
 )
 
 func Generate(c *config.Config, p *parser.Tree, r *rewriter.Rewriter) error {

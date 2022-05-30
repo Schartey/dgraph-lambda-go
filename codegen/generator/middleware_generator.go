@@ -7,9 +7,9 @@ import (
 	"path"
 	"text/template"
 
-	"github.com/schartey/dgraph-lambda-go/codegen/config"
-	"github.com/schartey/dgraph-lambda-go/codegen/parser"
-	"github.com/schartey/dgraph-lambda-go/codegen/rewriter"
+	"github.com/miko/dgraph-lambda-go/codegen/config"
+	"github.com/miko/dgraph-lambda-go/codegen/parser"
+	"github.com/miko/dgraph-lambda-go/codegen/rewriter"
 )
 
 func generateMiddleware(c *config.Config, parsedTree *parser.Tree, r *rewriter.Rewriter) error {
@@ -25,7 +25,7 @@ func generateMiddleware(c *config.Config, parsedTree *parser.Tree, r *rewriter.R
 		pkgs := make(map[string]*types.Package)
 
 		if len(parsedTree.Middleware) > 0 {
-			pkgs["api"] = types.NewPackage("github.com/schartey/dgraph-lambda-go/api", "api")
+			pkgs["api"] = types.NewPackage("github.com/miko/dgraph-lambda-go/api", "api")
 		}
 
 		err = middlewareResolverTemplate.Execute(f, struct {

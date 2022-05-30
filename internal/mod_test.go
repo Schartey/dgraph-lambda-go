@@ -37,5 +37,5 @@ func Test_GetModuleName(t *testing.T) {
 	moduleName, err := GetModuleName()
 	assert.NoError(t, err)
 
-	assert.Equal(t, "github.com/schartey/dgraph-lambda-go", moduleName)
+	assert.Equal(t, "github.com/miko/dgraph-lambda-go", moduleName)
 }
